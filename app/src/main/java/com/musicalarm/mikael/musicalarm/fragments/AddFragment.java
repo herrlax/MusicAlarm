@@ -2,9 +2,15 @@ package com.musicalarm.mikael.musicalarm.fragments;
 
 import android.app.Fragment;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.v7.graphics.Palette;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -13,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
@@ -30,6 +37,7 @@ import com.android.volley.toolbox.Volley;
 import com.musicalarm.mikael.musicalarm.AlarmItem;
 import com.musicalarm.mikael.musicalarm.MainActivity;
 import com.musicalarm.mikael.musicalarm.R;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -157,6 +165,36 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
                 // when users enters another character..
                 updateSongs(trackField.getText().toString());
+
+            }
+        });
+        
+        // when a user clicks a selected track in from search suggestions, load that into alarmItem
+        trackField.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                // stops suggesting
+                itemClicked = true;
+                AlarmItem searchItem = searchResultsItems.get(i);
+
+                // updates alarmItem with attributes from search item
+                alarmItem.setName(searchItem.getName());
+                alarmItem.setArtist(searchItem.getArtist());
+                alarmItem.setImageUrl(searchItem.getImageUrl());
+                alarmItem.setTrackUri(searchItem.getTrackUri());
+
+                try {
+                    alarmItem.jsonify(); // updates json in alarmItem
+                } catch (JSONException e) {}
+
+                // updates UI
+                trackField.setText(alarmItem.getArtist() + " - " + alarmItem.getName());
+                updateAlbumArt(alarmItem.getImageUrl());
+                preview.setVisibility(View.VISIBLE);
+
+                // hides keybaord
+                hideKeyboard();
 
             }
         });
@@ -330,7 +368,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
             // updates UI
             trackField.setText(artist + " - " + name);
 
-            // todo update album art
+            // updates album art
+            updateAlbumArt(imageUrl);
 
             preview.setVisibility(View.VISIBLE);
 
@@ -348,6 +387,57 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Updates album art and updates background color gradient based on image
+     * @param imageUrl image url to load as album art
+     */
+    public void updateAlbumArt(String imageUrl) {
+
+        // setting thumbnail ..
+        Picasso.with(getContext())
+                .load(imageUrl)
+                .fit()
+                .centerCrop()
+                .into(albumImage, new com.squareup.picasso.Callback() {
+                    @Override
+                    public void onSuccess() {
+                        updateBackgroundColor();
+                    }
+
+                    @Override
+                    public void onError() {
+
+                    }
+
+                });
+    }
+
+    /**
+     * Updates the background gradient based on album art
+     */
+    public void updateBackgroundColor() {
+        Palette.PaletteAsyncListener paletteListener = new Palette.PaletteAsyncListener() {
+            public void onGenerated(Palette p) {
+
+                int d = 0x0E0E0E;
+
+                GradientDrawable gd = new GradientDrawable(
+                        GradientDrawable.Orientation.TOP_BOTTOM,
+                        new int[] {p.getDarkMutedColor(d), d});
+
+                Drawable[] grads = {background.getBackground(), gd};
+
+                TransitionDrawable transitionDrawable = new TransitionDrawable(grads);
+                background.setBackground(transitionDrawable);
+                transitionDrawable.startTransition(500);
+
+            }
+        };
+
+        Bitmap bitmap = ((BitmapDrawable) albumImage.getDrawable()).getBitmap();
+        Palette.from(bitmap).generate(paletteListener);
     }
 
     @Override
