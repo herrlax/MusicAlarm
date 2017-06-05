@@ -36,6 +36,10 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
 
+    compile 'com.android.support:recyclerview-v7:24.+'
+    compile 'com.android.support:cardview-v7:24.+'
+    compile 'com.android.support:design:24.+'
+
     // This library handles authentication and authorization
     compile 'com.spotify.sdk:spotify-auth:1.0.0-beta13@aar'
 

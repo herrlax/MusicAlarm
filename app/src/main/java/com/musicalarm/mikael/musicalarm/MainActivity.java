@@ -3,10 +3,12 @@ package com.musicalarm.mikael.musicalarm;
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -20,17 +22,19 @@ import com.spotify.sdk.android.player.Spotify;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends FragmentActivity
         implements ConnectionStateCallback, PlayerNotificationCallback {
 
     private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
     private static final String REDIRECT_URI = "musicalarm://callback";
 
-
     protected static Player mPlayer;
     private static final int REQUEST_CODE = 1337;
 
     private static List<AlarmItem> alarms = new ArrayList<>();
+
+
+    private HomeFragment homeFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +78,7 @@ public class MainActivity extends AppCompatActivity
                         mPlayer.addConnectionStateCallback(MainActivity.this);
                         mPlayer.addPlayerNotificationCallback(MainActivity.this);
 
+                        initHomeFragment();
                         Log.d("MainActivity", "Init player correctly");
                     }
 
@@ -84,6 +89,16 @@ public class MainActivity extends AppCompatActivity
                 });
             }
         }
+    }
+
+    // opens the home fragment
+    public void initHomeFragment() {
+
+        homeFragment = new HomeFragment();
+
+        getFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, homeFragment)
+                .commit();
     }
 
     @Override
