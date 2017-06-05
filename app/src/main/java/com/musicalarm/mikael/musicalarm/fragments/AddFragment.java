@@ -22,6 +22,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -56,7 +57,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     private TextView titleText;
     private RelativeLayout background;
-    private RelativeLayout addButton;
+    private Button addButton;
     private ImageView backButton;
     private AutoCompleteTextView trackField;
     private static TextView timeText; // static to be able to be accessed from inner class
@@ -102,7 +103,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         titleText = (TextView) view.findViewById(R.id.title_text);
         albumImage = (ImageView) view.findViewById(R.id.album_image);
-        addButton = (RelativeLayout) view.findViewById(R.id.add_layout);
+        addButton = (Button) view.findViewById(R.id.addBtn);
         background = (RelativeLayout) view.findViewById(R.id.add_background);
 
         cancelButton = (TextView) view.findViewById(R.id.cancel_button);
@@ -168,7 +169,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
             }
         });
-        
+
         // when a user clicks a selected track in from search suggestions, load that into alarmItem
         trackField.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override

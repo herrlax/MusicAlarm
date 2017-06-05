@@ -7,6 +7,7 @@ import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
@@ -43,6 +44,8 @@ public class MainActivity extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // allows drawing under navigation bar and status bar
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         authSpotify();
 
     }
