@@ -1,15 +1,21 @@
 package com.musicalarm.mikael.musicalarm;
 
+import android.content.Intent;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.player.Config;
 import com.spotify.sdk.android.player.ConnectionStateCallback;
 import com.spotify.sdk.android.player.Player;
 import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
+import com.spotify.sdk.android.player.Spotify;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,37 +54,56 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onLoggedIn() {
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
 
+        // Check if result comes from the correct activity
+        if (requestCode == REQUEST_CODE) {
+
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+
+            if (response.getType() == AuthenticationResponse.Type.TOKEN) {
+
+                // inits the Spotify player if auth is correct
+                Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
+                Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
+
+                    @Override
+                    public void onInitialized(Player spotifyPlayer) {
+                        mPlayer = spotifyPlayer;
+                        mPlayer.addConnectionStateCallback(MainActivity.this);
+                        mPlayer.addPlayerNotificationCallback(MainActivity.this);
+
+                        Log.d("MainActivity", "Init player correctly");
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        Log.e("MainActivity", "Could not initialize player: " + throwable.getMessage());
+                    }
+                });
+            }
+        }
     }
 
     @Override
-    public void onLoggedOut() {
-
+    protected void onDestroy() {
+        Spotify.destroyPlayer(this); // destroy player to avoid resource leak
+        super.onDestroy();
     }
 
     @Override
-    public void onLoginFailed(Throwable throwable) {
-
-    }
-
+    public void onLoggedIn() {}
     @Override
-    public void onTemporaryError() {
-
-    }
-
+    public void onLoggedOut() {}
     @Override
-    public void onConnectionMessage(String s) {
-
-    }
-
+    public void onLoginFailed(Throwable throwable) {}
     @Override
-    public void onPlaybackEvent(EventType eventType, PlayerState playerState) {
-
-    }
-
+    public void onTemporaryError() {}
     @Override
-    public void onPlaybackError(ErrorType errorType, String s) {
-
-    }
+    public void onConnectionMessage(String s) {}
+    @Override
+    public void onPlaybackEvent(EventType eventType, PlayerState playerState) {}
+    @Override
+    public void onPlaybackError(ErrorType errorType, String s) {}
 }
