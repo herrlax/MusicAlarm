@@ -28,7 +28,9 @@ public class MainActivity extends FragmentActivity
     private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
     private static final String REDIRECT_URI = "musicalarm://callback";
 
-    protected static Player mPlayer;
+    public static Player mPlayer;
+    public static String token;
+
     private static final int REQUEST_CODE = 1337;
 
     private static List<AlarmItem> alarms = new ArrayList<>();
@@ -67,6 +69,9 @@ public class MainActivity extends FragmentActivity
             AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
 
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
+
+                Log.d("MainActivity", "token: " + response.getAccessToken());
+                token = response.getAccessToken();
 
                 // inits the Spotify player if auth is correct
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);

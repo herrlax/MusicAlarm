@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:background="#0E0E0E"
+    android:fitsSystemWindows="true"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:id="@+id/add_background"
+        android:background="@drawable/background_gradient"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:id="@+id/linearLayout">
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_below="@+id/linearLayout"
+        android:paddingLeft="@dimen/card_margin"
+        android:paddingTop="@dimen/card_margin"
+        android:id="@+id/title_area"
+        android:layout_width="match_parent"
+        android:layout_height="75dp">
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:clickable="true"
+            android:src="?android:attr/homeAsUpIndicator"
+            android:layout_centerVertical="true"
+            android:id="@+id/back_button" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_title"
+            android:textStyle="bold"
+            android:layout_marginLeft="@dimen/small_margin"
+            android:textColor="@color/textPrimary"
+            android:text="New alarm"
+            android:id="@+id/title_text"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/back_button" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/cancel_button"
+            android:textStyle="bold"
+            android:textSize="20dp"
+            android:layout_marginRight="@dimen/card_margin"
+            android:textColor="@color/textPrimary"
+            android:text="Cancel"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/track_area"
+        android:layout_width="match_parent"
+        android:layout_below="@id/title_area"
+        android:layout_height="75dp"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/album_image"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_centerVertical="true"
+            android:background="@color/textSecondary" />
+
+        <AutoCompleteTextView
+            android:id="@+id/track_field"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="16dp"
+            android:layout_toEndOf="@+id/album_image"
+            android:ems="9"
+            android:hint="Add song"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:textColor="@color/textPrimary"
+            android:textSize="24sp" />
+
+        <ImageView
+            android:id="@+id/preview"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/small_margin"
+            android:clickable="true"
+            android:layout_toRightOf="@id/track_field"
+            android:src="@drawable/ic_volume_up_white_24dp"
+            android:visibility="invisible" />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_below="@+id/track_area"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:padding="16dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="75dp">
+
+            <ImageView
+                android:id="@+id/clock_image"
+                android:layout_centerVertical="true"
+                android:layout_width="42dp"
+                android:layout_height="42dp"
+                android:clickable="true"
+                android:src="@drawable/ic_alarm_white_24dp" />
+
+            <TextView
+                android:id="@+id/time_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="-12dp"
+                android:layout_toRightOf="@id/clock_image"
+                android:clickable="true"
+                android:text="06:00"
+                android:textColor="@color/textPrimary"
+                android:textSize="48sp" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+
+    <RelativeLayout
+        android:id="@+id/add_layout"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:background="@drawable/my_fab"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="66dp"
+        android:elevation="4dp"
+        android:clickable="true">
+
+        <ImageView
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:layout_centerInParent="true"
+            android:src="@drawable/check"/>
+
+    </RelativeLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/done_button"
+        android:visibility="invisible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/card_margin"
+        android:clickable="true"
+        android:src="@drawable/check"
+        app:backgroundTint="@color/grass"
+        app:fabSize="normal" />
+    </RelativeLayout>
+</RelativeLayout>
