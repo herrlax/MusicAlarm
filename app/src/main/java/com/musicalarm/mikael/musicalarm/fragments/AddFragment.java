@@ -103,7 +103,28 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         titleText = (TextView) view.findViewById(R.id.title_text);
         albumImage = (ImageView) view.findViewById(R.id.album_image);
+
         addButton = (Button) view.findViewById(R.id.addBtn);
+        addButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+
+                // if no track has been set yet ..
+                if(alarmItem.getTrackUri().equals(""))
+                    return;
+
+                for(AddListener listener : listeners) {
+
+                    // clones the alarmitem to avoid reference issues
+                    AlarmItem item = alarmItem.clone();
+                    listener.addClicked(item);
+                }
+
+                exitFragment();
+            }
+        });
+
         background = (RelativeLayout) view.findViewById(R.id.add_background);
 
         cancelButton = (TextView) view.findViewById(R.id.cancel_button);

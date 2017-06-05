@@ -74,6 +74,8 @@ public class HomeFragment extends Fragment implements AddFragment.AddListener{
     @Override
     public void addClicked(AlarmItem item) {
 
+        alarmItems.add(item);
+        adapter.notifyDataSetChanged();
     }
 
     @Override
