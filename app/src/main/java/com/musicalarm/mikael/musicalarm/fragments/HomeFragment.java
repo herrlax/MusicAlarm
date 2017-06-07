@@ -52,17 +52,13 @@ public class HomeFragment extends Fragment {
         gridView.setHasFixedSize(true);
         gridView.setLayoutManager(gridLayoutManager);
 
-        adapter = new RecyclerViewAdapter(getContext(), ((MainActivity) getContext()).getAlarms());
-
-        gridView.setAdapter(adapter);
-
         listener.homeFragmentReady();
     }
 
     // updates items in list and notifies adapter
     public void refreshList() {
         adapter = new RecyclerViewAdapter(getContext(), ((MainActivity) getContext()).getAlarms());
-        adapter.notifyDataSetChanged();
+        adapter.setAdapterListener((MainActivity) getContext());
         gridView.setAdapter(adapter);
     }
 

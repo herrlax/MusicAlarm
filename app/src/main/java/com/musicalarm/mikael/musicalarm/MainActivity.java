@@ -12,6 +12,7 @@ import android.view.WindowManager;
 
 import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
+import com.musicalarm.mikael.musicalarm.fragments.RecycleUtils.RecyclerViewAdapter;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class MainActivity extends FragmentActivity
         implements ConnectionStateCallback, PlayerNotificationCallback,
-        AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener {
+        AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener, RecyclerViewAdapter.AdapterListener {
 
     private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
     private static final String REDIRECT_URI = "musicalarm://callback";
@@ -211,4 +212,17 @@ public class MainActivity extends FragmentActivity
     public void onPlaybackEvent(EventType eventType, PlayerState playerState) {}
     @Override
     public void onPlaybackError(ErrorType errorType, String s) {}
+
+    @Override
+    public void onDeleteClick(AlarmItem item) {
+
+        // if deleted alarm isn't in list, do nothing
+        if(!alarms.contains(item))
+            return;
+
+        alarms.remove(item);
+        saveAlarms();
+        homeFragment.refreshList();
+
+    }
 }

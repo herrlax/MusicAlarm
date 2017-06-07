@@ -18,6 +18,11 @@ import java.util.List;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder> {
 
+    public interface AdapterListener {
+        void onDeleteClick(AlarmItem item);
+    }
+
+    private AdapterListener listener;
     private List<AlarmItem> alarmItems;
     private Context context;
 
@@ -55,10 +60,18 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder>
                 .centerCrop()
                 .into(holder.getCardImage());
 
+
+        holder.getCardDelete().setOnClickListener(view -> {
+            listener.onDeleteClick(alarmItem);
+        });
     }
 
     @Override
     public int getItemCount() {
         return alarmItems.size();
+    }
+
+    public void setAdapterListener(AdapterListener listener) {
+        this.listener = listener;
     }
 }
