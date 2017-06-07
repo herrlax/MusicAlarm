@@ -45,12 +45,7 @@ public class HomeFragment extends Fragment {
     private void initUI(View view) {
 
         addText = (TextView) view.findViewById(R.id.addnew_button);
-        addText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                listener.addButtonClicked();
-            }
-        });
+        addText.setOnClickListener(view1 -> listener.addButtonClicked());
 
         gridLayoutManager = new GridLayoutManager(getContext(), 2);
         gridView = (RecyclerView) view.findViewById(R.id.grid_view);

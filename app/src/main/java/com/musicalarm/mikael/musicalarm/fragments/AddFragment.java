@@ -101,53 +101,31 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         albumImage = (ImageView) view.findViewById(R.id.album_image);
 
         saveButton = (Button) view.findViewById(R.id.addBtn);
-        saveButton.setOnClickListener(new View.OnClickListener() {
+        saveButton.setOnClickListener(view17 -> {
 
-            @Override
-            public void onClick(View view) {
+            // if no track has been set yet, do nothing
+            if(alarmItem.getTrackUri().equals(""))
+                return;
 
-                // if no track has been set yet, do nothing
-                if(alarmItem.getTrackUri().equals(""))
-                    return;
-
-                listener.saveClicked(alarmItem);
-                exitFragment();
-            }
+            listener.saveClicked(alarmItem);
+            exitFragment();
         });
 
         background = (RelativeLayout) view.findViewById(R.id.add_background);
 
         cancelButton = (TextView) view.findViewById(R.id.cancel_button);
-        cancelButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                exitFragment();
-            }
-        });
+        cancelButton.setOnClickListener(view16 -> exitFragment());
 
         backButton = (ImageView) view.findViewById(R.id.back_button);
-        backButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                exitFragment();
-            }
-        });
+        backButton.setOnClickListener(view15 -> exitFragment());
 
         timeText = (TextView) view.findViewById(R.id.time_text);
-        timeText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                // Todo open time picker
-            }
+        timeText.setOnClickListener(view14 -> {
+            // Todo open time picker
         });
 
-        view.findViewById(R.id.clock_image).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                // Todo open time picker
-            }
+        view.findViewById(R.id.clock_image).setOnClickListener(view13 -> {
+            // Todo open time picker
         });
 
 
@@ -182,56 +160,48 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         });
 
         // when a user clicks a selected track in from search suggestions, load that into alarmItem
-        trackField.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+        trackField.setOnItemClickListener((adapterView, view12, i, l) -> {
 
-                // stops suggesting
-                itemClicked = true;
-                AlarmItem searchItem = searchResultsItems.get(i);
+            // stops suggesting
+            itemClicked = true;
+            AlarmItem searchItem = searchResultsItems.get(i);
 
-                // updates alarmItem with attributes from search item
-                alarmItem.setName(searchItem.getName());
-                alarmItem.setArtist(searchItem.getArtist());
-                alarmItem.setImageUrl(searchItem.getImageUrl());
-                alarmItem.setTrackUri(searchItem.getTrackUri());
+            // updates alarmItem with attributes from search item
+            alarmItem.setName(searchItem.getName());
+            alarmItem.setArtist(searchItem.getArtist());
+            alarmItem.setImageUrl(searchItem.getImageUrl());
+            alarmItem.setTrackUri(searchItem.getTrackUri());
 
-                try {
-                    alarmItem.jsonify(); // updates json in alarmItem
-                } catch (JSONException e) {}
+            try {
+                alarmItem.jsonify(); // updates json in alarmItem
+            } catch (JSONException e) {}
 
-                // updates UI
-                trackField.setText(alarmItem.getArtist() + " - " + alarmItem.getName());
-                updateAlbumArt(alarmItem.getImageUrl());
-                preview.setVisibility(View.VISIBLE);
+            // updates UI
+            trackField.setText(alarmItem.getArtist() + " - " + alarmItem.getName());
+            updateAlbumArt(alarmItem.getImageUrl());
+            preview.setVisibility(View.VISIBLE);
 
-                // hides keybaord
-                hideKeyboard();
+            // hides keybaord
+            hideKeyboard();
 
-            }
         });
 
         // when a users selects a track from clicking enter on keyboard
-        trackField.setOnKeyListener(new View.OnKeyListener() { // listen to enter clicked
+        trackField.setOnKeyListener((view1, keyCode, keyEvent) -> {
 
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            @Override
-            public boolean onKey(View view, int keyCode, KeyEvent keyEvent) {
+            itemClicked = true;
 
-                itemClicked = true;
+            if ((keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
+                    (keyCode == KeyEvent.KEYCODE_ENTER)) {
 
-                if ((keyEvent.getAction() == KeyEvent.ACTION_DOWN) &&
-                        (keyCode == KeyEvent.KEYCODE_ENTER)) {
+                // Perform search on enter press
+                searchTrack(trackField.getText().toString().replaceAll(" ", "&20"));
+                hideKeyboard();
 
-                    // Perform search on enter press
-                    searchTrack(trackField.getText().toString().replaceAll(" ", "&20"));
-                    hideKeyboard();
-
-                    return true;
-                }
-
-                return false;
+                return true;
             }
+
+            return false;
         });
 
         preview = (ImageView) view.findViewById(R.id.preview);
@@ -252,12 +222,9 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("MainActivity", "success");
-                        setTrackFromTitle(response);
-                    }
+                response -> {
+                    Log.d("MainActivity", "success");
+                    setTrackFromTitle(response);
                 },
                 this){@Override public Map<String, String> getHeaders() {
 
