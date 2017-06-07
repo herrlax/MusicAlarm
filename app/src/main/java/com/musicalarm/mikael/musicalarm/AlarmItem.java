@@ -57,23 +57,27 @@ public class AlarmItem implements Cloneable {
         this.json = jsonObj.toString();
     }
 
-    public void buildFromJson(JSONObject json) {
+    // build from string
+    public static AlarmItem buildFromString(String s) {
+        AlarmItem item = new AlarmItem();
+        JSONObject json;
 
         try {
-            trackUri = json.getString("trackUri");
-            imageUrl = json.getString("imageUrl");
-            name = json.getString("name");
-            artist = json.getString("artist");
-            hour = Integer.parseInt(json.getString("hour"));
-            minute = Integer.parseInt(json.getString("minute"));
-            active = json.getBoolean("active");
-            alarmID = Integer.parseInt(json.getString("alarmID"));
+            json = new JSONObject(s);
+            item.trackUri = json.getString("trackUri");
+            item.imageUrl = json.getString("imageUrl");
+            item.name = json.getString("name");
+            item.artist = json.getString("artist");
+            item.hour = Integer.parseInt(json.getString("hour"));
+            item.minute = Integer.parseInt(json.getString("minute"));
+            item.active = json.getBoolean("active");
+            item.alarmID = Integer.parseInt(json.getString("alarmID"));
+            item.json = json.toString();
 
-            this.json = json.toString();
+        } catch (JSONException e) { e.printStackTrace(); }
 
-        } catch (JSONException e) {
+        return item;
 
-        }
     }
 
     public void setTrackUri(String trackUri) {

@@ -2,7 +2,10 @@ package com.musicalarm.mikael.musicalarm;
 
 import android.app.FragmentTransaction;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.WindowManager;
@@ -19,14 +22,23 @@ import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.Spotify;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class MainActivity extends FragmentActivity
-        implements ConnectionStateCallback, PlayerNotificationCallback, AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener {
+        implements ConnectionStateCallback, PlayerNotificationCallback,
+        AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener {
 
     private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
     private static final String REDIRECT_URI = "musicalarm://callback";
+    private static final String SHARED_PREFS = "SHARED_PREFS";
+    private static final String SAVED_ALARMS_JSON = "SAVED_ALARMS";
 
     public static Player mPlayer;
     public static String token;
@@ -107,12 +119,7 @@ public class MainActivity extends FragmentActivity
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, homeFragment)
                 .commit();
-    }
 
-    @Override
-    protected void onDestroy() {
-        Spotify.destroyPlayer(this); // destroy player to avoid resource leak
-        super.onDestroy();
     }
 
     // when a user clicks "Add new" in HomeFragment
@@ -126,17 +133,68 @@ public class MainActivity extends FragmentActivity
                 .commit();
     }
 
+    // callback when HomeFragment is ready
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void homeFragmentReady() {
+        loadAlarms();
+    }
+
 
     // when a user clicks "Add alarm" in AddFragment
     @Override
     public void saveClicked(AlarmItem item) {
-        Log.d("MainActivity", item.getArtist() + ":" + item.getName() + ":" + item.getHour());
         alarms.add(item);
         homeFragment.refreshList();
+        saveAlarms();
+    }
+
+    // loading alarms from local memory
+    public void loadAlarms() {
+        SharedPreferences shared = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        Set<String> jsonAlarms = shared.getStringSet(SAVED_ALARMS_JSON, new HashSet<>());
+
+        Log.d("MainActivity", "loaded hashset of size: " + jsonAlarms.size());
+
+        alarms = new ArrayList<>();
+
+        alarms = jsonAlarms
+                .stream()
+                .map(AlarmItem::buildFromString)
+                .collect(Collectors.toList());
+
+        Log.d("MainActivity", "alarms of size: " + alarms.size());
+
+        for(AlarmItem item : alarms) {
+            Log.d("MainActivity", "LOADED: " + item.getName());
+        }
+
+        homeFragment.refreshList();
+    }
+
+    // saves all alarms in json-format
+    public void saveAlarms() {
+        SharedPreferences shared = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = shared.edit();
+
+        Set<String> jsonAlarms = alarms
+                .stream()
+                .map(AlarmItem::getJson)
+                .collect(Collectors.toSet());
+
+        editor.putStringSet(SAVED_ALARMS_JSON, jsonAlarms);
+        editor.commit();
+
     }
 
     public List<AlarmItem> getAlarms() {
         return alarms;
+    }
+
+    @Override
+    protected void onDestroy() {
+        Spotify.destroyPlayer(this); // destroy player to avoid resource leak
+        super.onDestroy();
     }
 
     @Override

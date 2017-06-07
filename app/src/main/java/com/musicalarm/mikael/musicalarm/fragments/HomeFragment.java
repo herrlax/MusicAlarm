@@ -22,6 +22,7 @@ public class HomeFragment extends Fragment {
 
     public interface HomeFragmentListener {
         void addButtonClicked();
+        void homeFragmentReady();
     }
 
     private HomeFragmentListener listener;
@@ -59,11 +60,15 @@ public class HomeFragment extends Fragment {
         adapter = new RecyclerViewAdapter(getContext(), ((MainActivity) getContext()).getAlarms());
 
         gridView.setAdapter(adapter);
+
+        listener.homeFragmentReady();
     }
 
     // updates items in list and notifies adapter
     public void refreshList() {
+        adapter = new RecyclerViewAdapter(getContext(), ((MainActivity) getContext()).getAlarms());
         adapter.notifyDataSetChanged();
+        gridView.setAdapter(adapter);
     }
 
     @Override
