@@ -8,7 +8,7 @@
     <android.support.v7.widget.CardView
         android:id="@+id/card_view"
         android:layout_width="@dimen/card_width"
-        android:layout_height="278dp"
+        android:layout_height="288dp"
         android:layout_gravity="center"
         card_view:cardBackgroundColor="@color/cardBackground"
         card_view:cardCornerRadius="2dp"
@@ -16,39 +16,37 @@
         card_view:cardUseCompatPadding="true">
 
         <LinearLayout
-            android:clickable="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="0dp">
-
                 <RelativeLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="32dp"
-                    android:background="@drawable/ripple_back"
-                    android:clickable="true">
+                    android:padding="@dimen/small_margin">
 
                     <TextView
                         android:id="@+id/card_delete"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="DELETE"
+                        android:textStyle="bold"
                         android:textAlignment="center"
                         android:textColor="@color/textPrimary"
                         android:textSize="14sp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_alignParentTop="true"
+                        android:clickable="true"
+                        android:background="@drawable/ripple_back"
+                        android:layout_centerVertical="true"
                         android:layout_alignParentEnd="true" />
 
-                </RelativeLayout>
+                    <Switch
+                        android:id="@+id/switch1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true" />
 
-            </RelativeLayout>
+                </RelativeLayout>
 
             <ImageView
                 android:id="@+id/card_image"
