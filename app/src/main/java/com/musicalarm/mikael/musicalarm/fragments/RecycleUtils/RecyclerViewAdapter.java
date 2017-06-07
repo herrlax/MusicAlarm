@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 
 import com.musicalarm.mikael.musicalarm.AlarmItem;
 import com.musicalarm.mikael.musicalarm.R;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -18,9 +19,11 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder> {
 
     private List<AlarmItem> alarmItems;
+    private Context context;
 
     public RecyclerViewAdapter(Context context, List<AlarmItem> alarmItems) {
         this.alarmItems = alarmItems;
+        this.context = context;
     }
 
     @Override
@@ -44,6 +47,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder>
         holder.setId(alarmItem.getAlarmID());
         holder.getCardName().setText(alarmItem.getName());
         holder.getCardArtist().setText(alarmItem.getArtist());
+
+        // setting thumbnail ..
+        Picasso.with(context)
+                .load(alarmItem.getImageUrl())
+                .fit()
+                .centerCrop()
+                .into(holder.getCardImage());
 
     }
 
