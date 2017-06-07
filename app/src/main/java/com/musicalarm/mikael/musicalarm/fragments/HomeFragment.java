@@ -1,7 +1,7 @@
 package com.musicalarm.mikael.musicalarm.fragments;
 
 import android.app.Fragment;
-import android.app.FragmentTransaction;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -10,27 +10,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.musicalarm.mikael.musicalarm.AlarmItem;
+import com.musicalarm.mikael.musicalarm.MainActivity;
 import com.musicalarm.mikael.musicalarm.R;
 import com.musicalarm.mikael.musicalarm.fragments.RecycleUtils.RecyclerViewAdapter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by mikael on 2017-06-05.
  */
 
-public class HomeFragment extends Fragment implements AddFragment.AddListener{
+public class HomeFragment extends Fragment {
 
-    private AddFragment addFragment;
+    public interface HomeFragmentListener {
+        void addButtonClicked();
+    }
+
+    private HomeFragmentListener listener;
 
     private TextView addText;
 
     private RecyclerView gridView;
     private GridLayoutManager gridLayoutManager;
     private RecyclerViewAdapter adapter;
-    private List<AlarmItem> alarmItems = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -47,7 +47,7 @@ public class HomeFragment extends Fragment implements AddFragment.AddListener{
         addText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startAddFragment();
+                listener.addButtonClicked();
             }
         });
 
@@ -56,35 +56,19 @@ public class HomeFragment extends Fragment implements AddFragment.AddListener{
         gridView.setHasFixedSize(true);
         gridView.setLayoutManager(gridLayoutManager);
 
-        adapter = new RecyclerViewAdapter(getContext(), alarmItems);
+        adapter = new RecyclerViewAdapter(getContext(), ((MainActivity) getContext()).getAlarms());
 
         gridView.setAdapter(adapter);
     }
 
-    public void startAddFragment() {
-        addFragment = new AddFragment();
-        addFragment.addListener(HomeFragment.this);
-        getFragmentManager().beginTransaction()
-                .add(R.id.fragment_container, addFragment)
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                .addToBackStack(null)
-                .commit();
-    }
-
-    @Override
-    public void addClicked(AlarmItem item) {
-
-        alarmItems.add(item);
+    // updates items in list and notifies adapter
+    public void refreshList() {
         adapter.notifyDataSetChanged();
     }
 
     @Override
-    public void deleteClicked(AlarmItem item) {
-
-    }
-
-    @Override
-    public void editDoneClicked(AlarmItem item) {
-
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        listener = (HomeFragmentListener) context;
     }
 }

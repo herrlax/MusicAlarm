@@ -57,7 +57,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     private TextView titleText;
     private RelativeLayout background;
-    private Button addButton;
+    private Button saveButton;
     private ImageView backButton;
     private AutoCompleteTextView trackField;
     private static TextView timeText; // static to be able to be accessed from inner class
@@ -67,28 +67,24 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     private boolean itemClicked = false;
 
-    private static AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
+    private AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
 
     private ArrayAdapter<String> searchAdapter;
     private List<AlarmItem> searchResultsItems = new ArrayList<>();
     private List<String> stringResults = new ArrayList<>();
 
-    interface AddListener {
-        void addClicked(AlarmItem item);
-        void deleteClicked(AlarmItem item);
-        void editDoneClicked(AlarmItem item);
+    public interface AddFragmentListener {
+        void saveClicked(AlarmItem item);
     }
 
-    private List<AddListener> listeners;
+    private AddFragmentListener listener;
 
-    public void addListener(AddListener listener) {
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        listener = (AddFragmentListener) context;
 
-        if(listeners == null)
-            listeners = new ArrayList<>();
-
-        listeners.add(listener);
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -104,23 +100,17 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         titleText = (TextView) view.findViewById(R.id.title_text);
         albumImage = (ImageView) view.findViewById(R.id.album_image);
 
-        addButton = (Button) view.findViewById(R.id.addBtn);
-        addButton.setOnClickListener(new View.OnClickListener() {
+        saveButton = (Button) view.findViewById(R.id.addBtn);
+        saveButton.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View view) {
 
-                // if no track has been set yet ..
+                // if no track has been set yet, do nothing
                 if(alarmItem.getTrackUri().equals(""))
                     return;
 
-                for(AddListener listener : listeners) {
-
-                    // clones the alarmitem to avoid reference issues
-                    AlarmItem item = alarmItem.clone();
-                    listener.addClicked(item);
-                }
-
+                listener.saveClicked(alarmItem);
                 exitFragment();
             }
         });
@@ -427,12 +417,10 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                     public void onSuccess() {
                         updateBackgroundColor();
                     }
-
                     @Override
                     public void onError() {
-
+                        Log.d("MainActivity", "Error setting image using Picasso");
                     }
-
                 });
     }
 
