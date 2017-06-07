@@ -6,9 +6,12 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
@@ -188,6 +191,43 @@ public class MainActivity extends FragmentActivity
 
     }
 
+    @Override
+    public void onDeleteClick(AlarmItem item) {
+
+        // if deleted alarm isn't in list, do nothing
+        if(!alarms.contains(item))
+            return;
+
+        displayUndo(item, alarms.indexOf(item));
+        alarms.remove(item);
+
+        saveAlarms();
+        homeFragment.refreshList();
+    }
+
+    // Displays snackbar that allows user to undo delete
+    public void displayUndo(final AlarmItem removedItem, final int pos) {
+
+        Snackbar sn = Snackbar.make(findViewById(R.id.snackArea),
+                "Alarm removed \n \n", Snackbar.LENGTH_LONG);
+
+        View snackbarView = sn.getView();
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setY(-25f);
+        textView.setMaxLines(3);
+
+        // sets height of "UNDO"-text
+        snackbarView.findViewById(android.support.design.R.id.snackbar_action).setY(-65f);
+
+        sn.setAction("UNDO", view -> {
+            alarms.add(pos, removedItem);
+            saveAlarms();
+            homeFragment.refreshList();
+        });
+
+        sn.show();
+    }
+
     public List<AlarmItem> getAlarms() {
         return alarms;
     }
@@ -213,16 +253,4 @@ public class MainActivity extends FragmentActivity
     @Override
     public void onPlaybackError(ErrorType errorType, String s) {}
 
-    @Override
-    public void onDeleteClick(AlarmItem item) {
-
-        // if deleted alarm isn't in list, do nothing
-        if(!alarms.contains(item))
-            return;
-
-        alarms.remove(item);
-        saveAlarms();
-        homeFragment.refreshList();
-
-    }
 }
