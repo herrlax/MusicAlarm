@@ -1,18 +1,23 @@
 package com.musicalarm.mikael.musicalarm.fragments;
 
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.app.Fragment;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.TransitionDrawable;
+import android.icu.util.Calendar;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v7.graphics.Palette;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -26,6 +31,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -35,6 +41,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.musicalarm.mikael.musicalarm.AlarmActivity;
 import com.musicalarm.mikael.musicalarm.AlarmItem;
 import com.musicalarm.mikael.musicalarm.MainActivity;
 import com.musicalarm.mikael.musicalarm.R;
@@ -67,7 +74,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     private boolean itemClicked = false;
 
-    private AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
+    private static AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
 
     private ArrayAdapter<String> searchAdapter;
     private List<AlarmItem> searchResultsItems = new ArrayList<>();
@@ -121,7 +128,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         timeText = (TextView) view.findViewById(R.id.time_text);
         timeText.setOnClickListener(view14 -> {
-            // Todo open time picker
+            DialogFragment dialog = new TimePickerFragment();
+            dialog.show(getFragmentManager(), "timePicker");
         });
 
         view.findViewById(R.id.clock_image).setOnClickListener(view13 -> {
@@ -422,5 +430,52 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         Log.e("MainActivity", error.toString());
         Toast.makeText(getContext(), "probelmós de los internetós", Toast.LENGTH_SHORT).show();
 
+    }
+
+    public static class TimePickerFragment extends DialogFragment
+            implements TimePickerDialog.OnTimeSetListener {
+
+
+        @RequiresApi(api = Build.VERSION_CODES.N)
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Use the current time as the default values for the picker
+            final Calendar c = Calendar.getInstance();
+            int hour = c.get(Calendar.HOUR_OF_DAY);
+            int minute = c.get(Calendar.MINUTE);
+
+            // Create a new instance of TimePickerDialog and return it
+            return new TimePickerDialog(getActivity(), R.style.Theme_AppCompat_Light_Dialog, this, hour, minute,
+                    DateFormat.is24HourFormat(getActivity()));
+        }
+
+        public void onTimeSet(TimePicker view, int hour, int minute) {
+
+            // updates UI
+            timeText.setText(getFormatedTime(hour, minute));
+
+            // updates alarmItem
+            alarmItem.setHour(hour);
+            alarmItem.setMinute(minute);
+
+            try {
+                alarmItem.jsonify(); // updates json in alarmItem
+            } catch (JSONException e) {}
+
+            Log.d("MainActivity", alarmItem.getJson());
+
+        }
+
+        /**
+         * Formats time text to hh:mm
+         */
+        public static String getFormatedTime(int hour, int minute) {
+
+            String hourPrefix = hour < 10 ? "0" : "";
+            String minutePrefix = minute < 10 ? "0" : "";
+
+            return hourPrefix + hour + ":" + minutePrefix + minute;
+
+        }
     }
 }

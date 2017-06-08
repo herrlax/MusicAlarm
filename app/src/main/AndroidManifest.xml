@@ -3,6 +3,7 @@
     package="com.musicalarm.mikael.musicalarm">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -22,7 +23,9 @@
             android:name="com.spotify.sdk.android.authentication.LoginActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
+        <activity android:name=".AlarmActivity" />
 
+        <receiver android:name=".AlarmReceiver" />
     </application>
 
 </manifest>

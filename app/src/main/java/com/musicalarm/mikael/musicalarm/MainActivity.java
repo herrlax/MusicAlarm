@@ -1,8 +1,12 @@
 package com.musicalarm.mikael.musicalarm;
 
+import android.app.AlarmManager;
 import android.app.FragmentTransaction;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.icu.util.Calendar;
+import android.icu.util.GregorianCalendar;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.RequiresApi;
@@ -35,6 +39,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
+
 public class MainActivity extends FragmentActivity
         implements ConnectionStateCallback, PlayerNotificationCallback,
         AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener, RecyclerViewAdapter.AdapterListener {
@@ -45,12 +51,16 @@ public class MainActivity extends FragmentActivity
     private static final String SAVED_ALARMS_JSON = "SAVED_ALARMS";
 
     public static Player mPlayer;
+    private static AlarmManager alarmManager;
+
+    private boolean alarmTriggered;
+    private AlarmItem triggeredAlarm;
+
     public static String token;
 
     private static final int REQUEST_CODE = 1337;
 
     private List<AlarmItem> alarms = new ArrayList<>();
-
 
     private HomeFragment homeFragment;
     private AddFragment addFragment;
@@ -59,6 +69,12 @@ public class MainActivity extends FragmentActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        loadAlarms();
+
+        // if an intent with an alarmID started this activity, it was AlarmReceiver
+        if(getIntent().getStringExtra("alarmID") != null)
+            alarmTriggered = true;
 
         // allows drawing under navigation bar and status bar
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
@@ -102,6 +118,12 @@ public class MainActivity extends FragmentActivity
                         mPlayer.addConnectionStateCallback(MainActivity.this);
                         mPlayer.addPlayerNotificationCallback(MainActivity.this);
 
+                        // if this was caused by a triggered alarm..
+                        if(alarmTriggered) {
+                            triggerAlarm(getIntent().getStringExtra("alarmID"));
+                            alarmTriggered = false;
+                        }
+
                         initHomeFragment();
                         Log.d("MainActivity", "Init player correctly");
                     }
@@ -138,45 +160,39 @@ public class MainActivity extends FragmentActivity
     }
 
     // callback when HomeFragment is ready
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void homeFragmentReady() {
-        loadAlarms();
+        homeFragment.refreshList(); // refreshes list in HomeFragment to get loaded alarms
     }
 
 
     // when a user clicks "Add alarm" in AddFragment
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void saveClicked(AlarmItem item) {
+
         alarms.add(item);
         homeFragment.refreshList();
         saveAlarms();
+
+        scheduleAlarm(item);
     }
 
     // loading alarms from local memory
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void loadAlarms() {
         SharedPreferences shared = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         Set<String> jsonAlarms = shared.getStringSet(SAVED_ALARMS_JSON, new HashSet<>());
 
-        Log.d("MainActivity", "loaded hashset of size: " + jsonAlarms.size());
-
         alarms = new ArrayList<>();
-
         alarms = jsonAlarms
                 .stream()
                 .map(AlarmItem::buildFromString)
                 .collect(Collectors.toList());
-
-        Log.d("MainActivity", "alarms of size: " + alarms.size());
-
-        for(AlarmItem item : alarms) {
-            Log.d("MainActivity", "LOADED: " + item.getName());
-        }
-
-        homeFragment.refreshList();
     }
 
     // saves all alarms in json-format
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void saveAlarms() {
         SharedPreferences shared = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         SharedPreferences.Editor editor = shared.edit();
@@ -188,24 +204,88 @@ public class MainActivity extends FragmentActivity
 
         editor.putStringSet(SAVED_ALARMS_JSON, jsonAlarms);
         editor.commit();
-
     }
 
+    // schedules an alarm to be triggered
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public void scheduleAlarm(AlarmItem item) {
+        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        PendingIntent pi = alarmItemToPendingIntent(item);
+
+        Calendar calendar = new GregorianCalendar();
+
+        calendar.set(Calendar.HOUR_OF_DAY, item.getHour());
+        calendar.set(Calendar.MINUTE, item.getMinute());
+
+        // if alarm is set to a time earlier than now, assume it's for tomorrow
+        if(calendar.getTimeInMillis() < System.currentTimeMillis())
+            calendar.setTimeInMillis(calendar.getTimeInMillis() + 86400000);
+
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(), 86400000, // repeat every 24 hrs (86400000 ms)
+                pi);
+    }
+
+    public void triggerAlarm(String id) {
+
+        // finds correct alarm based on the id
+        triggeredAlarm = alarms
+                .stream()
+                .filter(x -> x.getAlarmID() == Integer.parseInt(id))
+                .findFirst()
+                .get();
+
+        mPlayer.play(triggeredAlarm.getTrackUri());
+
+        Intent in = new Intent(this, AlarmActivity.class);
+        in.putExtra("name", getIntent().getStringExtra("name"));
+        in.putExtra("artist", getIntent().getStringExtra("artist"));
+        in.putExtra("time", getIntent().getStringExtra("time"));
+        in.putExtra("image", getIntent().getStringExtra("image"));
+
+        this.startActivity(in);
+    }
+
+    /**
+     * Constructs a PendingIntent from an AlarmItem
+     */
+    public PendingIntent alarmItemToPendingIntent(AlarmItem item) {
+
+        Intent intent = new Intent(MainActivity.this, AlarmReceiver.class);
+        intent.putExtra("uri", item.getTrackUri());
+        intent.putExtra("name", item.getName());
+        intent.putExtra("artist", item.getArtist());
+        intent.putExtra("image", item.getImageUrl());
+
+        String hourPrefix = item.getHour() < 10 ? "0" : "";
+        String minutePrefix = item.getMinute() < 10 ? "0" : "";
+
+        intent.putExtra("time", hourPrefix + item.getHour() + ":" + minutePrefix + item.getMinute());
+        intent.putExtra("alarmID", item.getAlarmID()+"");
+
+        return PendingIntent.getBroadcast(MainActivity.this,
+                item.getAlarmID(), intent, FLAG_UPDATE_CURRENT);
+    }
+
+
+    /**
+     * Deletes and alarms and cancels it in the alarm manager
+     */
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onDeleteClick(AlarmItem item) {
 
-        // if deleted alarm isn't in list, do nothing
-        if(!alarms.contains(item))
-            return;
-
         displayUndo(item, alarms.indexOf(item));
         alarms.remove(item);
+        alarmManager.cancel(alarmItemToPendingIntent(item));
 
         saveAlarms();
         homeFragment.refreshList();
     }
 
     // Displays snackbar that allows user to undo delete
+    @RequiresApi(api = Build.VERSION_CODES.N)
     public void displayUndo(final AlarmItem removedItem, final int pos) {
 
         Snackbar sn = Snackbar.make(findViewById(R.id.snackArea),
@@ -240,6 +320,7 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onLoggedIn() {}
+
     @Override
     public void onLoggedOut() {}
     @Override
