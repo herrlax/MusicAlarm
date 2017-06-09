@@ -31,9 +31,6 @@ import com.spotify.sdk.android.player.PlayerNotificationCallback;
 import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.Spotify;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +76,7 @@ public class MainActivity extends FragmentActivity
 
         // allows drawing under navigation bar and status bar
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         authSpotify();
     }

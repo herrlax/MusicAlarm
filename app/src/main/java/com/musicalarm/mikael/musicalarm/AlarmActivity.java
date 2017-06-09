@@ -1,13 +1,14 @@
 package com.musicalarm.mikael.musicalarm;
 
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.v7.graphics.Palette;
-import android.util.Log;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -28,6 +29,8 @@ public class AlarmActivity extends Activity {
     private RelativeLayout snoozeButton;
     private LinearLayout background;
 
+    private KeyguardManager.KeyguardLock kgLock;
+
     private final int DARK_COLOR = 0x0E0E0E;
 
     @Override
@@ -36,6 +39,7 @@ public class AlarmActivity extends Activity {
         setContentView(R.layout.activity_alarm);
 
         initUI();
+        unlockPhone();
     }
 
     public void initUI() {
@@ -83,8 +87,24 @@ public class AlarmActivity extends Activity {
 
         dismissButton = (RelativeLayout) findViewById(R.id.dismiss_layout);
         dismissButton.setOnClickListener(view -> {
+            lockPhone();
             MainActivity.mPlayer.pause();
             AlarmActivity.this.finish();
         });
+    }
+
+    public void unlockPhone() {
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                | WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON);
+    }
+
+    public void lockPhone() {
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+                | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                | WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON);
     }
 }
