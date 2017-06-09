@@ -16,6 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
@@ -78,8 +79,8 @@ public class MainActivity extends FragmentActivity
 
         // allows drawing under navigation bar and status bar
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         authSpotify();
-
     }
 
     // authorizes user towards Spotify
@@ -209,7 +210,6 @@ public class MainActivity extends FragmentActivity
     // schedules an alarm to be triggered
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void scheduleAlarm(AlarmItem item) {
-        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         PendingIntent pi = alarmItemToPendingIntent(item);
 
@@ -218,9 +218,19 @@ public class MainActivity extends FragmentActivity
         calendar.set(Calendar.HOUR_OF_DAY, item.getHour());
         calendar.set(Calendar.MINUTE, item.getMinute());
 
-        // if alarm is set to a time earlier than now, assume it's for tomorrow
+        // if alarm is set to a time earlier than now, assume it's for tomorrow (+86400000 ms)
         if(calendar.getTimeInMillis() < System.currentTimeMillis())
             calendar.setTimeInMillis(calendar.getTimeInMillis() + 86400000);
+
+        long time = calendar.getTimeInMillis() - System.currentTimeMillis();
+        long minutes = time/1000/60;
+        long hours = minutes/60;
+
+        String minutesFromNow = (hours >= 1 ? minutes - 60 * hours : minutes) + " minutes from now";
+        String hoursFromNow = hours >= 1 ? hours + " hours and " : "";
+
+        Toast.makeText(this, "Alarm set for " + hoursFromNow + minutesFromNow,
+                Toast.LENGTH_LONG).show();
 
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(), 86400000, // repeat every 24 hrs (86400000 ms)
@@ -278,7 +288,8 @@ public class MainActivity extends FragmentActivity
 
         displayUndo(item, alarms.indexOf(item));
         alarms.remove(item);
-        alarmManager.cancel(alarmItemToPendingIntent(item));
+        alarmManager.cancel(
+                alarmItemToPendingIntent(item));
 
         saveAlarms();
         homeFragment.refreshList();
