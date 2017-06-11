@@ -24,7 +24,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
@@ -34,14 +33,12 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.musicalarm.mikael.musicalarm.AlarmActivity;
 import com.musicalarm.mikael.musicalarm.AlarmItem;
 import com.musicalarm.mikael.musicalarm.MainActivity;
 import com.musicalarm.mikael.musicalarm.R;
@@ -56,11 +53,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.musicalarm.mikael.musicalarm.fragments.AddFragment.TimePickerFragment.getFormatedTime;
+
 /**
  * Created by mikael on 2017-06-05.
  */
 
 public class AddFragment extends Fragment implements Response.Listener<String>, Response.ErrorListener {
+
+    private boolean editing;
 
     private TextView titleText;
     private RelativeLayout background;
@@ -75,6 +76,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     private boolean itemClicked = false;
 
     private static AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
+    private AlarmItem oldAlarmItem;
 
     private ArrayAdapter<String> searchAdapter;
     private List<AlarmItem> searchResultsItems = new ArrayList<>();
@@ -82,6 +84,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     public interface AddFragmentListener {
         void saveClicked(AlarmItem item);
+        void deleteClicked(AlarmItem item);
     }
 
     private AddFragmentListener listener;
@@ -95,8 +98,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_add, container, false);
 
+        View view = inflater.inflate(R.layout.fragment_add, container, false);
         initUI(view);
 
         return view;
@@ -107,24 +110,29 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         titleText = (TextView) view.findViewById(R.id.title_text);
         albumImage = (ImageView) view.findViewById(R.id.album_image);
 
+        cancelButton = (TextView) view.findViewById(R.id.cancel_button);
+        cancelButton.setOnClickListener(view16 -> cancelDeleteClicked());
+
+        backButton = (ImageView) view.findViewById(R.id.back_button);
+        backButton.setOnClickListener(view15 -> exitFragment());
+
         saveButton = (Button) view.findViewById(R.id.addBtn);
+
         saveButton.setOnClickListener(view17 -> {
 
             // if no track has been set yet, do nothing
-            if(alarmItem.getTrackUri().equals(""))
+            if(alarmItem.getTrackUri().equals("") && !editing)
                 return;
+
+            // if editing, remove the old alarm
+            if(editing)
+                listener.deleteClicked(oldAlarmItem);
 
             listener.saveClicked(alarmItem);
             exitFragment();
         });
 
         background = (RelativeLayout) view.findViewById(R.id.add_background);
-
-        cancelButton = (TextView) view.findViewById(R.id.cancel_button);
-        cancelButton.setOnClickListener(view16 -> exitFragment());
-
-        backButton = (ImageView) view.findViewById(R.id.back_button);
-        backButton.setOnClickListener(view15 -> exitFragment());
 
         timeText = (TextView) view.findViewById(R.id.time_text);
         timeText.setOnClickListener(view14 -> {
@@ -203,7 +211,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                     (keyCode == KeyEvent.KEYCODE_ENTER)) {
 
                 // Perform search on enter press
-                searchTrack(trackField.getText().toString().replaceAll(" ", "&20"));
+                searchTrack(trackField.getText().toString().replaceAll(" ", "+"));
                 hideKeyboard();
 
                 return true;
@@ -214,11 +222,29 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         preview = (ImageView) view.findViewById(R.id.preview);
 
+        if(editing) {
+            updateAlbumArt(oldAlarmItem.getImageUrl());
+            trackField.setText(oldAlarmItem.getArtist() + " - " + oldAlarmItem.getName());
+            timeText.setText(getFormatedTime(oldAlarmItem.getHour(), oldAlarmItem.getMinute()));
+            titleText.setText("Edit alarm");
+            saveButton.setText("Save alarm");
+            cancelButton.setText("Delete");
+        }
+
+    }
+
+    public void cancelDeleteClicked() {
+
+        if(editing)
+            listener.deleteClicked(oldAlarmItem);
+
+        exitFragment();
     }
 
     // searches for track with http GET
     @RequiresApi(api = Build.VERSION_CODES.M)
     public void searchTrack(String trackName) {
+
 
         // if trackname is too short, do nothing
         if(trackName.length() < 3)
@@ -231,7 +257,6 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 response -> {
-                    Log.d("MainActivity", "success");
                     setTrackFromTitle(response);
                 },
                 this){@Override public Map<String, String> getHeaders() {
@@ -253,8 +278,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         if(input.length() < 3)
             return songs;
 
-        String url = "https://api.spotify.com/v1/search?q=" + input.replaceAll(" ", "&20") + "&type=track&limit=3";
-        //String url = "https://api.spotify.com/v1/search?q=tania%20bowra&type=artist";
+        String url = "https://api.spotify.com/v1/search?q=" + input.replaceAll(" ", "+") + "&type=track&limit=3";
 
         RequestQueue queue = Volley.newRequestQueue(getContext());
 
@@ -265,15 +289,6 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
             params.put("Authorization", "Bearer " + MainActivity.token);
             return params;
         }};
-
-
-        try {
-            Log.d("MainActivity", stringRequest.getHeaders().toString());
-        } catch (AuthFailureError authFailureError) {
-            authFailureError.printStackTrace();
-        }
-
-        Log.d("MainActivity", stringRequest.toString());
 
         // Add the request to the RequestQueue.
         queue.add(stringRequest);
@@ -394,7 +409,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                     }
                     @Override
                     public void onError() {
-                        Log.d("MainActivity", "Error setting image using Picasso");
+                        Log.e("MainActivity", "Error setting image using Picasso");
                     }
                 });
     }
@@ -432,6 +447,18 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     }
 
+    public void setOldAlarmItem(AlarmItem oldAlarmItem) {
+        this.oldAlarmItem = oldAlarmItem;
+    }
+
+    public void setAlarmItem(AlarmItem alarmItem) {
+        this.alarmItem = alarmItem;
+    }
+
+    public void setEditing() {
+        this.editing = true;
+    }
+
     public static class TimePickerFragment extends DialogFragment
             implements TimePickerDialog.OnTimeSetListener {
 
@@ -460,9 +487,10 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
             try {
                 alarmItem.jsonify(); // updates json in alarmItem
-            } catch (JSONException e) {}
-
-            Log.d("MainActivity", alarmItem.getJson());
+            } catch (JSONException e) {
+                Log.e("MainActivity", "error converting into json");
+                e.printStackTrace();
+            }
 
         }
 

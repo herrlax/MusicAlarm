@@ -31,6 +31,10 @@ public class RecycleViewHolder extends RecyclerView.ViewHolder {
         cardArtist = (TextView) view.findViewById(R.id.card_artist);
         cardDelete = (TextView) view.findViewById(R.id.card_delete);
 
+        cardImage.setOnClickListener(view1 -> {
+
+        });
+
     }
 
     public TextView getCardTime() {

@@ -20,6 +20,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder>
 
     public interface AdapterListener {
         void onDeleteClick(AlarmItem item);
+        void onItemClicked(AlarmItem item);
     }
 
     private AdapterListener listener;
@@ -63,6 +64,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder>
 
         holder.getCardDelete().setOnClickListener(view -> {
             listener.onDeleteClick(alarmItem);
+        });
+
+        holder.getCardImage().setOnClickListener(view1 -> {
+            listener.onItemClicked(alarmItem);
         });
     }
 

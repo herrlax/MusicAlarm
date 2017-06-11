@@ -52,7 +52,6 @@ public class MainActivity extends FragmentActivity
     private static AlarmManager alarmManager;
 
     private boolean alarmTriggered;
-    private AlarmItem triggeredAlarm;
 
     public static String token;
 
@@ -63,6 +62,7 @@ public class MainActivity extends FragmentActivity
     private HomeFragment homeFragment;
     private AddFragment addFragment;
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,6 +106,8 @@ public class MainActivity extends FragmentActivity
 
                 Log.d("MainActivity", "token: " + response.getAccessToken());
                 token = response.getAccessToken();
+
+                Log.d("MainActivity", "TOKEN IS: " + MainActivity.token);
 
                 // inits the Spotify player if auth is correct
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
@@ -177,6 +179,12 @@ public class MainActivity extends FragmentActivity
         scheduleAlarm(item);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void deleteClicked(AlarmItem item) {
+        onDeleteClick(item);
+    }
+
     // loading alarms from local memory
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void loadAlarms() {
@@ -202,7 +210,8 @@ public class MainActivity extends FragmentActivity
                 .collect(Collectors.toSet());
 
         editor.putStringSet(SAVED_ALARMS_JSON, jsonAlarms);
-        editor.commit();
+        //editor.commit();
+        editor.apply();
     }
 
     // schedules an alarm to be triggered
@@ -238,7 +247,7 @@ public class MainActivity extends FragmentActivity
     public void triggerAlarm(String id) {
 
         // finds correct alarm based on the id
-        triggeredAlarm = alarms
+        AlarmItem triggeredAlarm = alarms
                 .stream()
                 .filter(x -> x.getAlarmID() == Integer.parseInt(id))
                 .findFirst()
@@ -291,6 +300,19 @@ public class MainActivity extends FragmentActivity
 
         saveAlarms();
         homeFragment.refreshList();
+    }
+
+    @Override
+    public void onItemClicked(AlarmItem item) {
+        addFragment = new AddFragment();
+        addFragment.setOldAlarmItem(item); // old alarm is needed to be removed
+        addFragment.setAlarmItem(item);
+        addFragment.setEditing();
+        getFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, addFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .addToBackStack(null)
+                .commit();
     }
 
     // Displays snackbar that allows user to undo delete
