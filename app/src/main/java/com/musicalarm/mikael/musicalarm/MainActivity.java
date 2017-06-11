@@ -19,6 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
+import com.musicalarm.mikael.musicalarm.fragments.AlarmFragment;
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
 import com.musicalarm.mikael.musicalarm.fragments.RecycleUtils.RecyclerViewAdapter;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
@@ -41,14 +42,15 @@ import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 
 public class MainActivity extends FragmentActivity
         implements ConnectionStateCallback, PlayerNotificationCallback,
-        AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener, RecyclerViewAdapter.AdapterListener {
+        AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener,
+        AlarmFragment.AlarmListener, RecyclerViewAdapter.AdapterListener {
 
     private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
     private static final String REDIRECT_URI = "musicalarm://callback";
     private static final String SHARED_PREFS = "SHARED_PREFS";
     private static final String SAVED_ALARMS_JSON = "SAVED_ALARMS";
 
-    public static Player mPlayer;
+    private Player mPlayer;
     private static AlarmManager alarmManager;
 
     private boolean alarmTriggered;
@@ -119,13 +121,14 @@ public class MainActivity extends FragmentActivity
                         mPlayer.addConnectionStateCallback(MainActivity.this);
                         mPlayer.addPlayerNotificationCallback(MainActivity.this);
 
-                        // if this was caused by a triggered alarm..
+                        // if an alarm was triggered, start the alarm activity
                         if(alarmTriggered) {
                             triggerAlarm(getIntent().getStringExtra("alarmID"));
                             alarmTriggered = false;
+                        } else { // else go to home
+                            initHomeFragment();
                         }
 
-                        initHomeFragment();
                         Log.d("MainActivity", "Init player correctly");
                     }
 
@@ -239,8 +242,8 @@ public class MainActivity extends FragmentActivity
         Toast.makeText(this, "Alarm set for " + hoursFromNow + minutesFromNow,
                 Toast.LENGTH_LONG).show();
 
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(), 86400000, // repeat every 24 hrs (86400000 ms)
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
                 pi);
     }
 
@@ -255,13 +258,14 @@ public class MainActivity extends FragmentActivity
 
         mPlayer.play(triggeredAlarm.getTrackUri());
 
-        Intent in = new Intent(this, AlarmActivity.class);
-        in.putExtra("name", getIntent().getStringExtra("name"));
-        in.putExtra("artist", getIntent().getStringExtra("artist"));
-        in.putExtra("time", getIntent().getStringExtra("time"));
-        in.putExtra("image", getIntent().getStringExtra("image"));
+        AlarmFragment alarmFragment = new AlarmFragment();
+        alarmFragment.setAlarmItem(triggeredAlarm);
 
-        this.startActivity(in);
+        getFragmentManager().beginTransaction()
+                .add(R.id.fragment_container, alarmFragment)
+                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                .addToBackStack(null)
+                .commit();
     }
 
     /**
@@ -365,4 +369,17 @@ public class MainActivity extends FragmentActivity
     @Override
     public void onPlaybackError(ErrorType errorType, String s) {}
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void onDismiss(AlarmItem alarmItem) {
+        mPlayer.pause();
+        initHomeFragment();
+        // todo schedule alarm in 24 hrs
+    }
+
+    @Override
+    public void onSnooze(AlarmItem alarmItem) {
+        mPlayer.pause();
+        // todo schedule alarm
+    }
 }

@@ -53,8 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.musicalarm.mikael.musicalarm.fragments.AddFragment.TimePickerFragment.getFormatedTime;
-
 /**
  * Created by mikael on 2017-06-05.
  */
@@ -63,19 +61,15 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     private boolean editing;
 
-    private TextView titleText;
     private RelativeLayout background;
-    private Button saveButton;
-    private ImageView backButton;
     private AutoCompleteTextView trackField;
-    private static TextView timeText; // static to be able to be accessed from inner class
+    private TextView timeText;
     private ImageView preview;
     private ImageView albumImage;
-    private TextView cancelButton;
 
     private boolean itemClicked = false;
 
-    private static AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
+    private AlarmItem alarmItem = new AlarmItem("", "", "", "", 6, 0, true, (int) System.currentTimeMillis());
     private AlarmItem oldAlarmItem;
 
     private ArrayAdapter<String> searchAdapter;
@@ -107,16 +101,16 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     private void initUI(View view) {
 
-        titleText = (TextView) view.findViewById(R.id.title_text);
+        TextView titleText = (TextView) view.findViewById(R.id.title_text);
         albumImage = (ImageView) view.findViewById(R.id.album_image);
 
-        cancelButton = (TextView) view.findViewById(R.id.cancel_button);
+        TextView cancelButton = (TextView) view.findViewById(R.id.cancel_button);
         cancelButton.setOnClickListener(view16 -> cancelDeleteClicked());
 
-        backButton = (ImageView) view.findViewById(R.id.back_button);
+        ImageView backButton = (ImageView) view.findViewById(R.id.back_button);
         backButton.setOnClickListener(view15 -> exitFragment());
 
-        saveButton = (Button) view.findViewById(R.id.addBtn);
+        Button saveButton = (Button) view.findViewById(R.id.addBtn);
 
         saveButton.setOnClickListener(view17 -> {
 
@@ -136,7 +130,9 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         timeText = (TextView) view.findViewById(R.id.time_text);
         timeText.setOnClickListener(view14 -> {
-            DialogFragment dialog = new TimePickerFragment();
+            TimePickerFragment dialog = new TimePickerFragment();
+            dialog.setTimeText(timeText);
+            dialog.setAlarmItem(alarmItem);
             dialog.show(getFragmentManager(), "timePicker");
         });
 
@@ -190,7 +186,9 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
             try {
                 alarmItem.jsonify(); // updates json in alarmItem
-            } catch (JSONException e) {}
+            } catch (JSONException e) {
+                Log.e("MainActivity", "error converting into json");
+                e.printStackTrace();}
 
             // updates UI
             trackField.setText(alarmItem.getArtist() + " - " + alarmItem.getName());
@@ -225,7 +223,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         if(editing) {
             updateAlbumArt(oldAlarmItem.getImageUrl());
             trackField.setText(oldAlarmItem.getArtist() + " - " + oldAlarmItem.getName());
-            timeText.setText(getFormatedTime(oldAlarmItem.getHour(), oldAlarmItem.getMinute()));
+            timeText.setText(oldAlarmItem.getFormatedTime());
             titleText.setText("Edit alarm");
             saveButton.setText("Save alarm");
             cancelButton.setText("Delete");
@@ -462,6 +460,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     public static class TimePickerFragment extends DialogFragment
             implements TimePickerDialog.OnTimeSetListener {
 
+        private TextView timeText;
+        private AlarmItem alarmItem;
 
         @RequiresApi(api = Build.VERSION_CODES.N)
         @Override
@@ -478,12 +478,11 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         public void onTimeSet(TimePicker view, int hour, int minute) {
 
-            // updates UI
-            timeText.setText(getFormatedTime(hour, minute));
-
             // updates alarmItem
             alarmItem.setHour(hour);
             alarmItem.setMinute(minute);
+
+            timeText.setText(alarmItem.getFormatedTime());
 
             try {
                 alarmItem.jsonify(); // updates json in alarmItem
@@ -491,19 +490,15 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                 Log.e("MainActivity", "error converting into json");
                 e.printStackTrace();
             }
-
         }
 
-        /**
-         * Formats time text to hh:mm
-         */
-        public static String getFormatedTime(int hour, int minute) {
-
-            String hourPrefix = hour < 10 ? "0" : "";
-            String minutePrefix = minute < 10 ? "0" : "";
-
-            return hourPrefix + hour + ":" + minutePrefix + minute;
-
+        public void setTimeText(TextView timeText) {
+            this.timeText = timeText;
         }
+
+        public void setAlarmItem(AlarmItem alarmItem) {
+            this.alarmItem = alarmItem;
+        }
+
     }
 }

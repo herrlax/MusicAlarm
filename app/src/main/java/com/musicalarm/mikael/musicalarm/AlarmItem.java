@@ -148,8 +148,16 @@ public class AlarmItem implements Cloneable {
         return alarmID;
     }
 
-    public void setAlarmID(int alarmID) {
-        this.alarmID = alarmID;
+    /**
+     * Formats time text to hh:mm
+     */
+    public String getFormatedTime() {
+
+        String hourPrefix = hour < 10 ? "0" : "";
+        String minutePrefix = minute < 10 ? "0" : "";
+
+        return hourPrefix + hour + ":" + minutePrefix + minute;
+
     }
 
     // clones this instance
