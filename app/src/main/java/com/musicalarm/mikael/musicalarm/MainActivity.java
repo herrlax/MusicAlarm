@@ -9,6 +9,7 @@ import android.icu.util.Calendar;
 import android.icu.util.GregorianCalendar;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
@@ -106,10 +107,7 @@ public class MainActivity extends FragmentActivity
 
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
 
-                Log.d("MainActivity", "token: " + response.getAccessToken());
                 token = response.getAccessToken();
-
-                Log.d("MainActivity", "TOKEN IS: " + MainActivity.token);
 
                 // inits the Spotify player if auth is correct
                 Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
@@ -179,7 +177,7 @@ public class MainActivity extends FragmentActivity
         homeFragment.refreshList();
         saveAlarms();
 
-        scheduleAlarm(item);
+        scheduleAlarm(item, null);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
@@ -217,23 +215,48 @@ public class MainActivity extends FragmentActivity
         editor.apply();
     }
 
-    // schedules an alarm to be triggered
+    /**
+     * Schedules an alarm to be triggered
+     * @param alarmItem alarm to be triggered
+     * @param alarmTime optional time (in ms) to trigger alarm,
+     *                  if other than stated in alarmItem
+     */
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public void scheduleAlarm(AlarmItem item) {
+    public void scheduleAlarm(AlarmItem alarmItem, @Nullable Long alarmTime) {
 
-        PendingIntent pi = alarmItemToPendingIntent(item);
+        PendingIntent pi = alarmItemToPendingIntent(alarmItem);
 
         Calendar calendar = new GregorianCalendar();
 
-        calendar.set(Calendar.HOUR_OF_DAY, item.getHour());
-        calendar.set(Calendar.MINUTE, item.getMinute());
-        calendar.set(Calendar.SECOND, 0);
+        // if a specific alarm time is stated, used this, instead of the one
+        // set in alarmTime
+        if(alarmTime != null) {
+            calendar.setTimeInMillis(alarmTime);
 
-        // if alarm is set to a time earlier than now, assume it's for tomorrow (+86400000 ms)
-        if(calendar.getTimeInMillis() < System.currentTimeMillis())
-            calendar.setTimeInMillis(calendar.getTimeInMillis() + 86400000);
+        } else { // use alarm time set in alarm
 
-        long time = calendar.getTimeInMillis() - System.currentTimeMillis();
+            calendar.set(Calendar.HOUR_OF_DAY, alarmItem.getHour());
+            calendar.set(Calendar.MINUTE, alarmItem.getMinute());
+            calendar.set(Calendar.SECOND, 0);
+
+            // if alarm is set to a time earlier than now, assume it's for tomorrow (in +86400000 ms)
+            if(calendar.getTimeInMillis() < System.currentTimeMillis())
+                calendar.setTimeInMillis(calendar.getTimeInMillis() + 86400000);
+        }
+
+        // notifies the user of the scheduled alarm
+        notifyUserOfSchedule(calendar.getTimeInMillis() - System.currentTimeMillis());
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                pi);
+    }
+
+    /**
+     * Notifies the user of the scheduled alarm
+     * @param time amount of time until scheduled alarm
+     */
+    public void notifyUserOfSchedule(long time) {
         long minutes = time/1000/60;
         long hours = minutes/60;
 
@@ -242,10 +265,6 @@ public class MainActivity extends FragmentActivity
 
         Toast.makeText(this, "Alarm set for " + hoursFromNow + minutesFromNow,
                 Toast.LENGTH_LONG).show();
-
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
-                pi);
     }
 
     public void triggerAlarm(String id) {
@@ -373,15 +392,16 @@ public class MainActivity extends FragmentActivity
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onDismiss(AlarmItem alarmItem) {
-        mPlayer.pause();            // stops music
-        initHomeFragment();         // opens home for user
-        scheduleAlarm(alarmItem);   // schedules alarm in 24 hrs
+        mPlayer.pause();                // stops music
+        initHomeFragment();             // opens home for user
+        scheduleAlarm(alarmItem, null); // schedules alarm in 24 hrs
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onSnooze(AlarmItem alarmItem) {
         mPlayer.pause();
         initHomeFragment();
-        // todo schedule alarm in 10 min
+        scheduleAlarm(alarmItem, System.currentTimeMillis() + 600000); // schedules alarm in 10 min (600000 ms)
     }
 }
