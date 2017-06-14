@@ -233,6 +233,9 @@ public class MainActivity extends FragmentActivity
         if(alarmTime != null) {
             calendar.setTimeInMillis(alarmTime);
 
+            // notifies the user of the scheduled alarm
+            notifyUserOfSchedule(alarmTime - System.currentTimeMillis(),
+                    "scheduled");
         } else { // use alarm time set in alarm
 
             calendar.set(Calendar.HOUR_OF_DAY, alarmItem.getHour());
@@ -242,10 +245,11 @@ public class MainActivity extends FragmentActivity
             // if alarm is set to a time earlier than now, assume it's for tomorrow (in +86400000 ms)
             if(calendar.getTimeInMillis() < System.currentTimeMillis())
                 calendar.setTimeInMillis(calendar.getTimeInMillis() + 86400000);
-        }
 
-        // notifies the user of the scheduled alarm
-        notifyUserOfSchedule(calendar.getTimeInMillis() - System.currentTimeMillis());
+            // notifies the user of the scheduled alarm
+            notifyUserOfSchedule(calendar.getTimeInMillis() - System.currentTimeMillis(),
+                    "scheduled");
+        }
 
         alarmManager.setExact(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
@@ -256,15 +260,40 @@ public class MainActivity extends FragmentActivity
      * Notifies the user of the scheduled alarm
      * @param time amount of time until scheduled alarm
      */
-    public void notifyUserOfSchedule(long time) {
+    public void notifyUserOfSchedule(long time, String type) {
+
         long minutes = time/1000/60;
         long hours = minutes/60;
 
-        String minutesFromNow = (hours >= 1 ? minutes - 60 * hours : minutes) + " minutes from now";
+        String minutesFromNow = (hours >= 1 ? minutes - 60 * hours : minutes) + " minutes";
         String hoursFromNow = hours >= 1 ? hours + " hours and " : "";
+        String sufix = type.equals("scheduled") ? " from now" : "";
 
-        Toast.makeText(this, "Alarm set for " + hoursFromNow + minutesFromNow,
-                Toast.LENGTH_LONG).show();
+        Snackbar sn = Snackbar.make(findViewById(R.id.snackArea),
+                "Alarm " + type + " for " + hoursFromNow + minutesFromNow + sufix + " \n \n",
+                Snackbar.LENGTH_LONG);
+
+        View snackbarView = sn.getView();
+        TextView textView = (TextView) snackbarView.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setY(-25f);
+        textView.setMaxLines(3);
+
+        // sets height
+        snackbarView.findViewById(android.support.design.R.id.snackbar_action).setY(-65f);
+
+        if(type.equals("snoozed")) {
+
+            sn.setAction("CHANGE", view -> {
+                // TODO let user pick snooze time
+            });
+        } else if(type.equals("scheduled")) {
+
+            sn.setAction("UNDO", view -> {
+                // TODO open AddFragment and let user edit alarm
+            });
+        }
+
+        sn.show();
     }
 
     public void triggerAlarm(String id) {
