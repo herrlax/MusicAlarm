@@ -23,6 +23,7 @@ import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
 import com.musicalarm.mikael.musicalarm.fragments.AlarmFragment;
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
 import com.musicalarm.mikael.musicalarm.fragments.RecycleUtils.RecyclerViewAdapter;
+import com.musicalarm.mikael.musicalarm.fragments.SnoozeFragment;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
@@ -235,7 +236,7 @@ public class MainActivity extends FragmentActivity
 
             // notifies the user of the scheduled alarm
             notifyUserOfSchedule(alarmTime - System.currentTimeMillis(),
-                    "scheduled");
+                    "snoozed");
         } else { // use alarm time set in alarm
 
             calendar.set(Calendar.HOUR_OF_DAY, alarmItem.getHour());
@@ -262,6 +263,8 @@ public class MainActivity extends FragmentActivity
      */
     public void notifyUserOfSchedule(long time, String type) {
 
+        Log.d("MainActivity", "type is: " + type);
+
         long minutes = time/1000/60;
         long hours = minutes/60;
 
@@ -285,11 +288,17 @@ public class MainActivity extends FragmentActivity
 
             sn.setAction("CHANGE", view -> {
                 // TODO let user pick snooze time
+                getFragmentManager().beginTransaction()
+                        .add(R.id.fragment_container, new SnoozeFragment())
+                        .commit();
             });
         } else if(type.equals("scheduled")) {
 
             sn.setAction("UNDO", view -> {
                 // TODO open AddFragment and let user edit alarm
+                getFragmentManager().beginTransaction()
+                        .add(R.id.fragment_container, new SnoozeFragment())
+                        .commit();
             });
         }
 

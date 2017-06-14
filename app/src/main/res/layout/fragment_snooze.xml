@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="250dp"
+        android:id="@+id/top_area"
+        android:background="#CC000000">
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/background_gradient"
+        android:paddingLeft="@dimen/card_margin"
+        android:paddingTop="@dimen/card_margin">
+
+        <TextView
+            android:id="@+id/snooze_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="Snooze for"
+            android:textColor="@color/textPrimary"
+            android:textSize="@dimen/text_huge"
+            android:textStyle="bold" />
+
+
+
+            <NumberPicker
+                android:layout_marginTop="@dimen/card_margin"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:layout_below="@+id/snooze_text"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="center_vertical">
+
+            </NumberPicker>
+        <Button
+            android:id="@+id/snooze_add"
+            android:layout_width="140dp"
+            android:layout_height="40dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="60dp"
+            android:background="@drawable/my_fab"
+            android:text="Snooze" />
+
+    </RelativeLayout>
+
+</LinearLayout>
