@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="@dimen/card_margin"
         android:fitsSystemWindows="true"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true">
@@ -23,6 +23,7 @@
 
             <TextView
                 android:id="@+id/alarm_time"
+                android:layout_marginTop="@dimen/card_margin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="08:15"
@@ -78,14 +79,13 @@
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/card_margin">
+                android:layout_below="@+id/alarm_artist"
+                android:layout_marginTop="32dp">
 
                 <RelativeLayout
                     android:id="@+id/dismiss_layout"
                     android:layout_width="175dp"
                     android:layout_height="40dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_marginBottom="80dp"
                     android:layout_alignParentEnd="true"
                     android:clickable="true"
                     android:elevation="4dp">
@@ -106,8 +106,6 @@
                     android:id="@+id/snooze_layout"
                     android:layout_width="175dp"
                     android:layout_height="40dp"
-                    android:layout_alignParentBottom="true"
-                    android:layout_marginBottom="80dp"
                     android:clickable="true"
                     android:elevation="4dp">
 

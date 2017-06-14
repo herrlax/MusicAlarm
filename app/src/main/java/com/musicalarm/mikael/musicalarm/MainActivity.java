@@ -227,6 +227,7 @@ public class MainActivity extends FragmentActivity
 
         calendar.set(Calendar.HOUR_OF_DAY, item.getHour());
         calendar.set(Calendar.MINUTE, item.getMinute());
+        calendar.set(Calendar.SECOND, 0);
 
         // if alarm is set to a time earlier than now, assume it's for tomorrow (+86400000 ms)
         if(calendar.getTimeInMillis() < System.currentTimeMillis())
@@ -372,14 +373,15 @@ public class MainActivity extends FragmentActivity
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void onDismiss(AlarmItem alarmItem) {
-        mPlayer.pause();
-        initHomeFragment();
-        // todo schedule alarm in 24 hrs
+        mPlayer.pause();            // stops music
+        initHomeFragment();         // opens home for user
+        scheduleAlarm(alarmItem);   // schedules alarm in 24 hrs
     }
 
     @Override
     public void onSnooze(AlarmItem alarmItem) {
         mPlayer.pause();
-        // todo schedule alarm
+        initHomeFragment();
+        // todo schedule alarm in 10 min
     }
 }
