@@ -6,9 +6,10 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:id="@+id/top_area"
-        android:background="#CC000000">
+        android:layout_height="300dp"
+        android:clickable="true"
+        android:background="@android:color/transparent"
+        android:id="@+id/top_area">
 
     </RelativeLayout>
 
@@ -29,19 +30,20 @@
             android:textSize="@dimen/text_huge"
             android:textStyle="bold" />
 
+        <NumberPicker
+            android:id="@+id/number_picker"
+            android:theme="@style/NumberPickerText"
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:layout_below="@+id/snooze_text"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center_vertical"
+            android:layout_marginTop="@dimen/card_margin">
+        </NumberPicker>
 
-
-            <NumberPicker
-                android:layout_marginTop="@dimen/card_margin"
-                android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:layout_below="@+id/snooze_text"
-                android:layout_centerHorizontal="true"
-                android:layout_gravity="center_vertical">
-
-            </NumberPicker>
         <Button
-            android:id="@+id/snooze_add"
+            android:id="@+id/snoozer"
             android:layout_width="140dp"
             android:layout_height="40dp"
             android:layout_alignParentBottom="true"

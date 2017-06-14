@@ -16,8 +16,8 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
 import com.musicalarm.mikael.musicalarm.fragments.AlarmFragment;
@@ -45,7 +45,8 @@ import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 public class MainActivity extends FragmentActivity
         implements ConnectionStateCallback, PlayerNotificationCallback,
         AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener,
-        AlarmFragment.AlarmListener, RecyclerViewAdapter.AdapterListener {
+        AlarmFragment.AlarmListener, RecyclerViewAdapter.AdapterListener,
+        SnoozeFragment.SnoozeFragmentListener{
 
     private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
     private static final String REDIRECT_URI = "musicalarm://callback";
@@ -287,18 +288,27 @@ public class MainActivity extends FragmentActivity
         if(type.equals("snoozed")) {
 
             sn.setAction("CHANGE", view -> {
+
+                AlphaAnimation animation1 = new AlphaAnimation(1.0f, 0.2f);
+                animation1.setDuration(500);
+                animation1.setFillAfter(true);
+                homeFragment.getView().startAnimation(animation1);
+
+
                 // TODO let user pick snooze time
                 getFragmentManager().beginTransaction()
+                        .setCustomAnimations(R.animator.slide_up, 0)
+                        .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .add(R.id.fragment_container, new SnoozeFragment())
                         .commit();
+
+
             });
         } else if(type.equals("scheduled")) {
 
             sn.setAction("UNDO", view -> {
                 // TODO open AddFragment and let user edit alarm
-                getFragmentManager().beginTransaction()
-                        .add(R.id.fragment_container, new SnoozeFragment())
-                        .commit();
+
             });
         }
 
@@ -441,5 +451,17 @@ public class MainActivity extends FragmentActivity
         mPlayer.pause();
         initHomeFragment();
         scheduleAlarm(alarmItem, System.currentTimeMillis() + 600000); // schedules alarm in 10 min (600000 ms)
+    }
+
+    @Override
+    public void onExitClick() {
+
+        homeFragment.getView().setAlpha(1f);
+    }
+
+    @Override
+    public void onSnooze() {
+
+        homeFragment.getView().setAlpha(1f);
     }
 }

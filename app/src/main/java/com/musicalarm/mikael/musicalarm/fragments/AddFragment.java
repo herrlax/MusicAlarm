@@ -105,7 +105,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         albumImage = (ImageView) view.findViewById(R.id.album_image);
 
         TextView cancelButton = (TextView) view.findViewById(R.id.cancel_button);
-        cancelButton.setOnClickListener(view16 -> cancelDeleteClicked());
+        //cancelButton.setOnClickListener(view16 -> cancelDeleteClicked());
 
         ImageView backButton = (ImageView) view.findViewById(R.id.back_button);
         backButton.setOnClickListener(view15 -> exitFragment());
