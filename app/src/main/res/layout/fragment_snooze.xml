@@ -48,7 +48,7 @@
             android:layout_height="40dp"
             android:layout_alignParentBottom="true"
             android:layout_centerHorizontal="true"
-            android:layout_marginBottom="60dp"
+            android:layout_marginBottom="68dp"
             android:background="@drawable/my_fab"
             android:text="Snooze" />
 

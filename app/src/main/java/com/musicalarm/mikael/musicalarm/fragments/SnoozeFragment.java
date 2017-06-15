@@ -2,11 +2,7 @@ package com.musicalarm.mikael.musicalarm.fragments;
 
 import android.app.Fragment;
 import android.content.Context;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.TransitionDrawable;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,9 +10,8 @@ import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
 
+import com.musicalarm.mikael.musicalarm.AlarmItem;
 import com.musicalarm.mikael.musicalarm.R;
-
-import static android.R.color.transparent;
 
 /**
  * Created by mikael on 2017-06-14.
@@ -24,9 +19,17 @@ import static android.R.color.transparent;
 
 public class SnoozeFragment extends Fragment {
 
+    private AlarmItem alarmItem;
+
+    private long timeValue = 10;
+
+    public void setTimeValue(long timeValue) {
+        this.timeValue = timeValue;
+    }
+
     public interface SnoozeFragmentListener {
-        void onExitClick();
-        void onSnooze();
+        void onExitSnoozeDialog();
+        void onSnoozeChanged(AlarmItem alarmItem, Long snoozeTime);
     }
 
     SnoozeFragmentListener listener;
@@ -47,22 +50,24 @@ public class SnoozeFragment extends Fragment {
         numberPicker.setMinValue(1);
         numberPicker.setMaxValue(60);
         numberPicker.setWrapSelectorWheel(true);
-        numberPicker.setValue(10);
+        numberPicker.setValue((int)timeValue);
 
         RelativeLayout background = (RelativeLayout) view.findViewById(R.id.top_area);
         background.setOnClickListener(view1 -> {
-            listener.onExitClick();
             getFragmentManager().popBackStack();
+            listener.onExitSnoozeDialog();
         });
 
         Button snoozer = (Button) view.findViewById(R.id.snoozer);
         snoozer.setOnClickListener(view2 -> {
-            listener.onSnooze();
             getFragmentManager().popBackStack();
+            listener.onSnoozeChanged(alarmItem, numberPicker.getValue()*60000l);
         });
 
-
-
         return view;
+    }
+
+    public void setAlarmItem(AlarmItem alarmItem) {
+        this.alarmItem = alarmItem;
     }
 }

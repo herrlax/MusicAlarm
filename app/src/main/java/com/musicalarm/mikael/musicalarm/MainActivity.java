@@ -213,7 +213,6 @@ public class MainActivity extends FragmentActivity
                 .collect(Collectors.toSet());
 
         editor.putStringSet(SAVED_ALARMS_JSON, jsonAlarms);
-        //editor.commit();
         editor.apply();
     }
 
@@ -236,8 +235,9 @@ public class MainActivity extends FragmentActivity
             calendar.setTimeInMillis(alarmTime);
 
             // notifies the user of the scheduled alarm
-            notifyUserOfSchedule(alarmTime - System.currentTimeMillis(),
-                    "snoozed");
+            notifyUserOfSchedule(alarmTime - System.currentTimeMillis()  + 1000, // adds a second for show
+                    "snoozed",
+                    alarmItem);
         } else { // use alarm time set in alarm
 
             calendar.set(Calendar.HOUR_OF_DAY, alarmItem.getHour());
@@ -250,7 +250,8 @@ public class MainActivity extends FragmentActivity
 
             // notifies the user of the scheduled alarm
             notifyUserOfSchedule(calendar.getTimeInMillis() - System.currentTimeMillis(),
-                    "scheduled");
+                    "scheduled",
+                    alarmItem);
         }
 
         alarmManager.setExact(AlarmManager.RTC_WAKEUP,
@@ -262,7 +263,7 @@ public class MainActivity extends FragmentActivity
      * Notifies the user of the scheduled alarm
      * @param time amount of time until scheduled alarm
      */
-    public void notifyUserOfSchedule(long time, String type) {
+    public void notifyUserOfSchedule(long time, String type, AlarmItem alarmItem) {
 
         Log.d("MainActivity", "type is: " + type);
 
@@ -289,27 +290,26 @@ public class MainActivity extends FragmentActivity
 
             sn.setAction("CHANGE", view -> {
 
-                AlphaAnimation animation1 = new AlphaAnimation(1.0f, 0.2f);
-                animation1.setDuration(500);
-                animation1.setFillAfter(true);
-                homeFragment.getView().startAnimation(animation1);
+                // cancels alarm, so it wont go off while editing..
+                alarmManager.cancel(
+                        alarmItemToPendingIntent(alarmItem));
 
+                fadeBackground(1.0f, 0.25f);
+                SnoozeFragment snoozeFragment = new SnoozeFragment();
+                snoozeFragment.setAlarmItem(alarmItem);
+                snoozeFragment.setTimeValue(minutes);
 
-                // TODO let user pick snooze time
                 getFragmentManager().beginTransaction()
                         .setCustomAnimations(R.animator.slide_up, 0)
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                        .add(R.id.fragment_container, new SnoozeFragment())
+                        .add(R.id.fragment_container, snoozeFragment)
+                        .addToBackStack(null)
                         .commit();
-
 
             });
         } else if(type.equals("scheduled")) {
 
-            sn.setAction("UNDO", view -> {
-                // TODO open AddFragment and let user edit alarm
-
-            });
+            // TODO let user undo
         }
 
         sn.show();
@@ -454,14 +454,22 @@ public class MainActivity extends FragmentActivity
     }
 
     @Override
-    public void onExitClick() {
-
-        homeFragment.getView().setAlpha(1f);
+    public void onExitSnoozeDialog() {
+        fadeBackground(0.25f, 1.0f);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
-    public void onSnooze() {
+    public void onSnoozeChanged(AlarmItem alarmItem, Long snoozeTime) {
+        fadeBackground(0.25f, 1.0f);
+        scheduleAlarm(alarmItem, System.currentTimeMillis() + snoozeTime);
+    }
 
-        homeFragment.getView().setAlpha(1f);
+    public void fadeBackground(float start, float end) {
+
+        AlphaAnimation animation1 = new AlphaAnimation(start, end);
+        animation1.setDuration(500);
+        animation1.setFillAfter(true);
+        homeFragment.getView().startAnimation(animation1);
     }
 }
