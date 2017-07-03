@@ -76,6 +76,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     private List<AlarmItem> searchResultsItems = new ArrayList<>();
     private List<String> stringResults = new ArrayList<>();
 
+    private String token;
+
     public interface AddFragmentListener {
         void saveClicked(AlarmItem item);
         void deleteClicked(AlarmItem item);
@@ -86,7 +88,11 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        listener = (AddFragmentListener) context;
+
+        if(context.getClass() == MainActivity.class) {
+            Log.d("MainActivity", "Correct class");
+            listener = (AddFragmentListener) context;
+        }
 
     }
 
@@ -121,6 +127,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
             // if editing, remove the old alarm
             if(editing)
                 listener.deleteClicked(oldAlarmItem);
+
+            Log.d("MainActivity", listener.toString());
 
             listener.saveClicked(alarmItem);
             exitFragment();
@@ -260,7 +268,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                 this){@Override public Map<String, String> getHeaders() {
 
             Map<String, String> params = new HashMap<>();
-            params.put("Authorization", "Bearer " + MainActivity.token);
+            params.put("Authorization", "Bearer " + token);
             return params;
         }};
 
@@ -284,7 +292,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url, this, this
         ){@Override public Map<String, String> getHeaders() {
             Map<String, String> params = new HashMap<>();
-            params.put("Authorization", "Bearer " + MainActivity.token);
+            params.put("Authorization", "Bearer " + token);
             return params;
         }};
 
@@ -455,6 +463,10 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     public void setEditing() {
         this.editing = true;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public static class TimePickerFragment extends DialogFragment

@@ -3,6 +3,7 @@ package com.musicalarm.mikael.musicalarm;
 import android.app.AlarmManager;
 import android.app.FragmentTransaction;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.icu.util.Calendar;
@@ -20,18 +21,12 @@ import android.view.animation.AlphaAnimation;
 import android.widget.TextView;
 
 import com.musicalarm.mikael.musicalarm.fragments.AddFragment;
-import com.musicalarm.mikael.musicalarm.fragments.AlarmFragment;
 import com.musicalarm.mikael.musicalarm.fragments.HomeFragment;
 import com.musicalarm.mikael.musicalarm.fragments.RecycleUtils.RecyclerViewAdapter;
 import com.musicalarm.mikael.musicalarm.fragments.SnoozeFragment;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
-import com.spotify.sdk.android.player.Config;
-import com.spotify.sdk.android.player.ConnectionStateCallback;
-import com.spotify.sdk.android.player.Player;
-import com.spotify.sdk.android.player.PlayerNotificationCallback;
-import com.spotify.sdk.android.player.PlayerState;
 import com.spotify.sdk.android.player.Spotify;
 
 import java.util.ArrayList;
@@ -43,24 +38,20 @@ import java.util.stream.Collectors;
 import static android.app.PendingIntent.FLAG_UPDATE_CURRENT;
 
 public class MainActivity extends FragmentActivity
-        implements ConnectionStateCallback, PlayerNotificationCallback,
-        AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener,
-        AlarmFragment.AlarmListener, RecyclerViewAdapter.AdapterListener,
+        implements AddFragment.AddFragmentListener, HomeFragment.HomeFragmentListener,
+        RecyclerViewAdapter.AdapterListener,
         SnoozeFragment.SnoozeFragmentListener{
 
-    private static final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
-    private static final String REDIRECT_URI = "musicalarm://callback";
-    private static final String SHARED_PREFS = "SHARED_PREFS";
-    private static final String SAVED_ALARMS_JSON = "SAVED_ALARMS";
+    private final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
+    private final String REDIRECT_URI = "musicalarm://callback";
+    private final String SHARED_PREFS = "com.musicalarm.mikael.musicalarm";
+    private final String SAVED_ALARMS_JSON = "SAVED_ALARMS";
 
-    private Player mPlayer;
-    private static AlarmManager alarmManager;
+    private AlarmManager alarmManager;
 
-    private boolean alarmTriggered;
+    private String token;
 
-    public static String token;
-
-    private static final int REQUEST_CODE = 1337;
+    private final int REQUEST_CODE = 1337;
 
     private List<AlarmItem> alarms = new ArrayList<>();
 
@@ -73,17 +64,30 @@ public class MainActivity extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        initHomeFragment();
         loadAlarms();
-
-        // if an intent with an alarmID started this activity, it was AlarmReceiver
-        if(getIntent().getStringExtra("alarmID") != null)
-            alarmTriggered = true;
 
         // allows drawing under navigation bar and status bar
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
         authSpotify();
+
+        if(getIntent().getIntExtra("alarmID", 0) != 0) {
+            AlarmItem triggeredAlarm = alarms
+                    .stream()
+                    .filter(x -> x.getAlarmID() == getIntent().getIntExtra("alarmID", 0))
+                    .findFirst()
+                    .get();
+
+            if(getIntent().getBooleanExtra("snooze", false)) {
+                scheduleAlarm(triggeredAlarm, System.currentTimeMillis() + 600000);
+            } else {
+                scheduleAlarm(triggeredAlarm, null);
+            }
+
+        }
+
     }
 
     // authorizes user towards Spotify
@@ -92,6 +96,7 @@ public class MainActivity extends FragmentActivity
                 CLIENT_ID,
                 AuthenticationResponse.Type.TOKEN,
                 REDIRECT_URI);
+
         builder.setScopes(new String[]{"user-read-private", "streaming"});
         AuthenticationRequest request = builder.build();
 
@@ -111,32 +116,10 @@ public class MainActivity extends FragmentActivity
 
                 token = response.getAccessToken();
 
-                // inits the Spotify player if auth is correct
-                Config playerConfig = new Config(this, response.getAccessToken(), CLIENT_ID);
-                Spotify.getPlayer(playerConfig, this, new Player.InitializationObserver() {
+                // saves auth token locally
+                SharedPreferences prefs = this.getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
+                prefs.edit().putString("com.musicalarm.mikael.musicalarm.token", token).apply();
 
-                    @Override
-                    public void onInitialized(Player spotifyPlayer) {
-                        mPlayer = spotifyPlayer;
-                        mPlayer.addConnectionStateCallback(MainActivity.this);
-                        mPlayer.addPlayerNotificationCallback(MainActivity.this);
-
-                        // if an alarm was triggered, start the alarm activity
-                        if(alarmTriggered) {
-                            triggerAlarm(getIntent().getStringExtra("alarmID"));
-                            alarmTriggered = false;
-                        } else { // else go to home
-                            initHomeFragment();
-                        }
-
-                        Log.d("MainActivity", "Init player correctly");
-                    }
-
-                    @Override
-                    public void onError(Throwable throwable) {
-                        Log.e("MainActivity", "Could not initialize player: " + throwable.getMessage());
-                    }
-                });
             }
         }
     }
@@ -156,10 +139,11 @@ public class MainActivity extends FragmentActivity
     @Override
     public void addButtonClicked() {
         addFragment = new AddFragment();
+        addFragment.setToken(token);
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, addFragment)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                .addToBackStack(null)
+                .addToBackStack("addFragment")
                 .commit();
     }
 
@@ -254,6 +238,10 @@ public class MainActivity extends FragmentActivity
                     alarmItem);
         }
 
+        if(alarmManager == null)
+            alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+
         alarmManager.setExact(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
                 pi);
@@ -264,8 +252,6 @@ public class MainActivity extends FragmentActivity
      * @param time amount of time until scheduled alarm
      */
     public void notifyUserOfSchedule(long time, String type, AlarmItem alarmItem) {
-
-        Log.d("MainActivity", "type is: " + type);
 
         long minutes = time/1000/60;
         long hours = minutes/60;
@@ -290,6 +276,9 @@ public class MainActivity extends FragmentActivity
 
             sn.setAction("CHANGE", view -> {
 
+                if(alarmManager == null)
+                    alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
                 // cancels alarm, so it wont go off while editing..
                 alarmManager.cancel(
                         alarmItemToPendingIntent(alarmItem));
@@ -303,7 +292,7 @@ public class MainActivity extends FragmentActivity
                         .setCustomAnimations(R.animator.slide_up, 0)
                         .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                         .add(R.id.fragment_container, snoozeFragment)
-                        .addToBackStack(null)
+                        .addToBackStack("snoozeFragment")
                         .commit();
 
             });
@@ -315,27 +304,6 @@ public class MainActivity extends FragmentActivity
         sn.show();
     }
 
-    public void triggerAlarm(String id) {
-
-        // finds correct alarm based on the id
-        AlarmItem triggeredAlarm = alarms
-                .stream()
-                .filter(x -> x.getAlarmID() == Integer.parseInt(id))
-                .findFirst()
-                .get();
-
-        mPlayer.play(triggeredAlarm.getTrackUri());
-
-        AlarmFragment alarmFragment = new AlarmFragment();
-        alarmFragment.setAlarmItem(triggeredAlarm);
-
-        getFragmentManager().beginTransaction()
-                .add(R.id.fragment_container, alarmFragment)
-                .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                .addToBackStack(null)
-                .commit();
-    }
-
     /**
      * Constructs a PendingIntent from an AlarmItem
      */
@@ -345,13 +313,10 @@ public class MainActivity extends FragmentActivity
         intent.putExtra("uri", item.getTrackUri());
         intent.putExtra("name", item.getName());
         intent.putExtra("artist", item.getArtist());
-        intent.putExtra("image", item.getImageUrl());
-
-        String hourPrefix = item.getHour() < 10 ? "0" : "";
-        String minutePrefix = item.getMinute() < 10 ? "0" : "";
-
-        intent.putExtra("time", hourPrefix + item.getHour() + ":" + minutePrefix + item.getMinute());
-        intent.putExtra("alarmID", item.getAlarmID()+"");
+        intent.putExtra("imageUrl", item.getImageUrl());
+        intent.putExtra("hour", item.getHour());
+        intent.putExtra("minute", item.getMinute());
+        intent.putExtra("alarmID", item.getAlarmID());
 
         return PendingIntent.getBroadcast(MainActivity.this,
                 item.getAlarmID(), intent, FLAG_UPDATE_CURRENT);
@@ -367,6 +332,10 @@ public class MainActivity extends FragmentActivity
 
         displayUndo(item, alarms.indexOf(item));
         alarms.remove(item);
+
+        if(alarmManager == null)
+            alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
         alarmManager.cancel(
                 alarmItemToPendingIntent(item));
 
@@ -383,7 +352,7 @@ public class MainActivity extends FragmentActivity
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, addFragment)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-                .addToBackStack(null)
+                .addToBackStack("addFragment")
                 .commit();
     }
 
@@ -419,38 +388,6 @@ public class MainActivity extends FragmentActivity
     protected void onDestroy() {
         Spotify.destroyPlayer(this); // destroy player to avoid resource leak
         super.onDestroy();
-    }
-
-    @Override
-    public void onLoggedIn() {}
-
-    @Override
-    public void onLoggedOut() {}
-    @Override
-    public void onLoginFailed(Throwable throwable) {}
-    @Override
-    public void onTemporaryError() {}
-    @Override
-    public void onConnectionMessage(String s) {}
-    @Override
-    public void onPlaybackEvent(EventType eventType, PlayerState playerState) {}
-    @Override
-    public void onPlaybackError(ErrorType errorType, String s) {}
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
-    public void onDismiss(AlarmItem alarmItem) {
-        mPlayer.pause();                // stops music
-        initHomeFragment();             // opens home for user
-        scheduleAlarm(alarmItem, null); // schedules alarm in 24 hrs
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
-    public void onSnooze(AlarmItem alarmItem) {
-        mPlayer.pause();
-        initHomeFragment();
-        scheduleAlarm(alarmItem, System.currentTimeMillis() + 600000); // schedules alarm in 10 min (600000 ms)
     }
 
     @Override

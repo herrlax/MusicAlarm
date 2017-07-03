@@ -3,7 +3,6 @@ package com.musicalarm.mikael.musicalarm;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.WakefulBroadcastReceiver;
-import android.util.Log;
 
 /**
  * Created by mikael on 2017-06-08.
@@ -14,17 +13,18 @@ public class AlarmReceiver extends WakefulBroadcastReceiver {
     @Override
     public void onReceive(final Context context, Intent intent) {
 
-        //perform your task
-        Intent in = new Intent(context, MainActivity.class);
-        in.putExtra("alarmID", intent.getStringExtra("alarmID"));
+        Intent in = new Intent(context, AlarmActivity.class);
+
+        // puts all we need to start the alarm
+        in.putExtra("alarmID", intent.getIntExtra("alarmID", 0));
+        in.putExtra("uri", intent.getStringExtra("uri"));
+        in.putExtra("imageUrl", intent.getStringExtra("imageUrl"));
+        in.putExtra("name", intent.getStringExtra("name"));
+        in.putExtra("artist", intent.getStringExtra("artist"));
+        in.putExtra("image", intent.getStringExtra("image"));
+        in.putExtra("hour", intent.getIntExtra("hour", 0));
+        in.putExtra("minute", intent.getIntExtra("minute", 0));
 
         context.startActivity(in);
-
-        /*MainActivity m = new MainActivity();
-        m.triggerAlarm(intent);*/
-
-        /*if(MainActivity.mPlayer != null) {
-            MainActivity.mPlayer.play(intent.getStringExtra("uri"));
-        }*/
     }
 }

@@ -96,20 +96,12 @@ public class AlarmItem implements Cloneable {
         this.minute = minute;
     }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
     public void setArtist(String artist) {
         this.artist = artist;
-    }
-
-    public boolean isActive() {
-        return active;
     }
 
     public int getMinute() {
