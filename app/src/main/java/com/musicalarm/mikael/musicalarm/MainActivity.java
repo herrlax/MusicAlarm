@@ -209,7 +209,7 @@ public class MainActivity extends FragmentActivity
     @RequiresApi(api = Build.VERSION_CODES.N)
     public void scheduleAlarm(AlarmItem alarmItem, @Nullable Long alarmTime) {
 
-        PendingIntent pi = alarmItemToPendingIntent(alarmItem);
+        PendingIntent pi;
 
         Calendar calendar = new GregorianCalendar();
 
@@ -219,9 +219,17 @@ public class MainActivity extends FragmentActivity
             calendar.setTimeInMillis(alarmTime);
 
             // notifies the user of the scheduled alarm
-            notifyUserOfSchedule(alarmTime - System.currentTimeMillis()  + 1000, // adds a second for show
+            notifyUserOfSchedule(alarmTime - System.currentTimeMillis()  + 1000, // adds a second of visual reasons
                     "snoozed",
                     alarmItem);
+
+            // sets new time for snooze
+            AlarmItem snoozeAlarm = alarmItem.clone();
+            snoozeAlarm.setMinute((int) ((alarmTime / (1000*60)) % 60));
+            snoozeAlarm.setHour((int) ((alarmTime / (1000*60*60)) % 24));
+
+            pi = alarmItemToPendingIntent(snoozeAlarm);
+
         } else { // use alarm time set in alarm
 
             calendar.set(Calendar.HOUR_OF_DAY, alarmItem.getHour());
@@ -236,13 +244,15 @@ public class MainActivity extends FragmentActivity
             notifyUserOfSchedule(calendar.getTimeInMillis() - System.currentTimeMillis(),
                     "scheduled",
                     alarmItem);
+
+            pi = alarmItemToPendingIntent(alarmItem);
         }
 
         if(alarmManager == null)
             alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
 
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP,
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
                 calendar.getTimeInMillis(),
                 pi);
     }
