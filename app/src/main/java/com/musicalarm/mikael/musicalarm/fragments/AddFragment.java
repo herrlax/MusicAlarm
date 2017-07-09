@@ -5,6 +5,7 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -75,8 +76,6 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     private ArrayAdapter<String> searchAdapter;
     private List<AlarmItem> searchResultsItems = new ArrayList<>();
     private List<String> stringResults = new ArrayList<>();
-
-    private String token;
 
     public interface AddFragmentListener {
         void saveClicked(AlarmItem item);
@@ -156,6 +155,15 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         trackField = (AutoCompleteTextView) view.findViewById(R.id.track_field);
         trackField.setAdapter(searchAdapter);
 
+        if(editing) {
+            updateAlbumArt(oldAlarmItem.getImageUrl());
+            trackField.setText(oldAlarmItem.getArtist() + " - " + oldAlarmItem.getName());
+            timeText.setText(oldAlarmItem.getFormatedTime());
+            titleText.setText("Edit alarm");
+            saveButton.setText("Save alarm");
+            cancelButton.setText("Delete");
+        }
+
         // when users enters text, suggest new songs..
         trackField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -228,15 +236,6 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         preview = (ImageView) view.findViewById(R.id.preview);
 
-        if(editing) {
-            updateAlbumArt(oldAlarmItem.getImageUrl());
-            trackField.setText(oldAlarmItem.getArtist() + " - " + oldAlarmItem.getName());
-            timeText.setText(oldAlarmItem.getFormatedTime());
-            titleText.setText("Edit alarm");
-            saveButton.setText("Save alarm");
-            cancelButton.setText("Delete");
-        }
-
     }
 
     public void cancelDeleteClicked() {
@@ -267,6 +266,9 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                 },
                 this){@Override public Map<String, String> getHeaders() {
 
+            SharedPreferences prefs = getContext().getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
+            String token = prefs.getString("com.musicalarm.mikael.musicalarm.token", "");
+
             Map<String, String> params = new HashMap<>();
             params.put("Authorization", "Bearer " + token);
             return params;
@@ -286,11 +288,21 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
         String url = "https://api.spotify.com/v1/search?q=" + input.replaceAll(" ", "+") + "&type=track&limit=3";
 
+        SharedPreferences prefs = getContext().getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
+        String token = prefs.getString("com.musicalarm.mikael.musicalarm.token", "");
+
+        Log.d("MainActivity", "url: " + url);
+        Log.d("MainActivity", "token: " + token);
+
         RequestQueue queue = Volley.newRequestQueue(getContext());
 
         // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url, this, this
         ){@Override public Map<String, String> getHeaders() {
+
+            SharedPreferences prefs = getContext().getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
+            String token = prefs.getString("com.musicalarm.mikael.musicalarm.token", "");
+
             Map<String, String> params = new HashMap<>();
             params.put("Authorization", "Bearer " + token);
             return params;
@@ -463,10 +475,6 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
 
     public void setEditing() {
         this.editing = true;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
     }
 
     public static class TimePickerFragment extends DialogFragment

@@ -63,50 +63,15 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
 
         initUI();
         setFlags(); // used to unlock device
-        //this.authSpotify();
-
 
         SharedPreferences prefs = this.getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
         Config config = new Config(this, prefs.getString("com.musicalarm.mikael.musicalarm.token", ""), CLIENT_ID);
 
         mPlayer = Spotify.getPlayer(config, this, this);
-
-    }
-
-    // authorizes user towards Spotify
-    public void authSpotify() {
-        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
-                CLIENT_ID,
-                AuthenticationResponse.Type.TOKEN,
-                REDIRECT_URI);
-
-        builder.setScopes(new String[]{"user-read-private", "streaming"});
-        AuthenticationRequest request = builder.build();
-
-        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode, resultCode, intent);
-
-        // Check if result comes from the correct activity
-        if (requestCode == REQUEST_CODE) {
-
-            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
-
-            if (response.getType() == AuthenticationResponse.Type.TOKEN) {
-
-                Config config = new Config(this, response.getAccessToken(), CLIENT_ID);
-                mPlayer = Spotify.getPlayer(config, this, this);
-
-            }
-        }
     }
 
     @Override
     public void onInitialized(Player player) {
-
         mPlayer = player;
         mPlayer.addConnectionStateCallback(this);
         mPlayer.addPlayerNotificationCallback(this);

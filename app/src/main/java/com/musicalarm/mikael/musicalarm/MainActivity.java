@@ -92,6 +92,9 @@ public class MainActivity extends FragmentActivity
 
     // authorizes user towards Spotify
     public void authSpotify() {
+
+        Log.d("MainActivity", "authing..");
+
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
                 CLIENT_ID,
                 AuthenticationResponse.Type.TOKEN,
@@ -107,6 +110,10 @@ public class MainActivity extends FragmentActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
 
+        Log.d("MainActivity", "onActivityResult");
+        Log.d("MainActivity", "requestCode: " + requestCode);
+        Log.d("MainActivity", "resultCode: " + resultCode);
+
         // Check if result comes from the correct activity
         if (requestCode == REQUEST_CODE) {
 
@@ -115,10 +122,13 @@ public class MainActivity extends FragmentActivity
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
 
                 token = response.getAccessToken();
+                Log.d("MainActivity", "Got token!");
 
                 // saves auth token locally
                 SharedPreferences prefs = this.getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
-                prefs.edit().putString("com.musicalarm.mikael.musicalarm.token", token).apply();
+                prefs.edit()
+                        .putString("com.musicalarm.mikael.musicalarm.token", token)
+                        .apply();
 
             }
         }
@@ -139,7 +149,6 @@ public class MainActivity extends FragmentActivity
     @Override
     public void addButtonClicked() {
         addFragment = new AddFragment();
-        addFragment.setToken(token);
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, addFragment)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
@@ -252,9 +261,13 @@ public class MainActivity extends FragmentActivity
             alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
 
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
+        alarmManager.setAlarmClock(
+                new AlarmManager.AlarmClockInfo(calendar.getTimeInMillis(), pi),
                 pi);
+
+        /*alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                calendar.getTimeInMillis(),
+                pi);*/
     }
 
     /**
