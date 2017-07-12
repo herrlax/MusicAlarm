@@ -33,7 +33,8 @@ import com.squareup.picasso.Picasso;
  * Created by mikael on 2017-06-11.
  */
 
-public class AlarmActivity extends Activity implements ConnectionStateCallback, PlayerNotificationCallback, Player.InitializationObserver{
+public class AlarmActivity extends Activity
+        implements ConnectionStateCallback, PlayerNotificationCallback {
 
     private ImageView image;
     private LinearLayout background;
@@ -43,7 +44,7 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
 
     private final String REDIRECT_URI = "musicalarm://callback";
     private final String CLIENT_ID = "22a32c3cb52747b0912c3701637d53db";
-    private final int REQUEST_CODE = 1337;
+    private final int REQUEST_CODE = 1338;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,18 +65,40 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
         initUI();
         setFlags(); // used to unlock device
 
-        SharedPreferences prefs = this.getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
-        Config config = new Config(this, prefs.getString("com.musicalarm.mikael.musicalarm.token", ""), CLIENT_ID);
+        SharedPreferences prefs = this.getSharedPreferences(getString(R.string.tag_sharedprefs), Context.MODE_PRIVATE);
+        Config config = new Config(this, prefs.getString(getString(R.string.tag_sharedpref_token), ""), CLIENT_ID);
 
-        mPlayer = Spotify.getPlayer(config, this, this);
+        initPlayer(config);
     }
 
-    @Override
-    public void onInitialized(Player player) {
-        mPlayer = player;
-        mPlayer.addConnectionStateCallback(this);
-        mPlayer.addPlayerNotificationCallback(this);
-        mPlayer.play(alarmItem.getTrackUri());
+    // tries to get an instance of the Spotify player with the provided config
+    public void initPlayer(Config config) {
+
+        Spotify.getPlayer(config, this, new Player.InitializationObserver() {
+
+            @Override
+            public void onInitialized(Player player) {
+                mPlayer = player;
+                mPlayer.addConnectionStateCallback(AlarmActivity.this);
+                mPlayer.addPlayerNotificationCallback(AlarmActivity.this);
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+                // retries to auth Spotify
+                authSpotify();
+
+                Log.e(getString(R.string.tag_log), "Could not initialize player: " + throwable.getMessage());
+
+                // saves error logs for debugging
+                SharedPreferences debugPrefs =
+                        AlarmActivity.this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
+                debugPrefs.edit()
+                        .putString(getString(R.string.tag_debug_onError), throwable.getMessage())
+                        .apply();
+            }
+        });
     }
 
     public void initUI() {
@@ -154,6 +177,48 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
         });
     }
 
+
+    // authorizes user towards Spotify, this is called if initPlayer fails to fetch the player
+    public void authSpotify() {
+
+        AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
+                CLIENT_ID,
+                AuthenticationResponse.Type.TOKEN,
+                REDIRECT_URI);
+
+        builder.setScopes(new String[]{"streaming"});
+        AuthenticationRequest request = builder.build();
+
+        AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
+    }
+
+    // response from openLoginActivity
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+
+
+        // Check if result comes from the correct activity
+        if (requestCode == REQUEST_CODE) {
+
+            AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
+
+            if (response.getType() == AuthenticationResponse.Type.TOKEN) {
+
+                // updates auth token locally
+                SharedPreferences prefs = this.getSharedPreferences(getString(R.string.tag_sharedprefs), Context.MODE_PRIVATE);
+                prefs.edit()
+                        .putString(getString(R.string.tag_sharedpref_token), response.getAccessToken())
+                        .apply();
+
+                Config config = new Config(this, response.getAccessToken(), CLIENT_ID);
+
+                initPlayer(config);
+
+            }
+        }
+    }
+
     public void setFlags() {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
@@ -171,6 +236,8 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
     @Override
     public void onLoggedIn() {
 
+        // start playing as soon as we are confirmed as logged in
+        mPlayer.play(alarmItem.getTrackUri());
     }
 
     @Override
@@ -180,22 +247,30 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
 
     @Override
     public void onLoginFailed(Throwable throwable) {
+        Log.e(getString(R.string.tag_log), "onLoginFailed: " + throwable.getMessage());
 
+        // saves error logs for debugging
+        SharedPreferences debugPrefs = this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
+        debugPrefs.edit()
+                .putString(getString(R.string.tag_debug_onLoginFailed), throwable.getMessage())
+                .apply();
     }
 
     @Override
     public void onTemporaryError() {
 
+        Log.e(getString(R.string.tag_log), "onTemporaryError: " + System.currentTimeMillis()+"");
+
+        // saves error logs for debugging
+        SharedPreferences debugPrefs = this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
+        debugPrefs.edit()
+                .putString(getString(R.string.tag_debug_onTemporaryError), System.currentTimeMillis()+"")
+                .apply();
     }
 
     @Override
     public void onConnectionMessage(String s) {
-
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-
+        Log.d(getString(R.string.tag_log), "onConnectionMessage: " + s);
     }
 
     @Override
@@ -205,6 +280,12 @@ public class AlarmActivity extends Activity implements ConnectionStateCallback, 
 
     @Override
     public void onPlaybackError(ErrorType errorType, String s) {
+        Log.e(getString(R.string.tag_log), "onPlaybackError: " + s);
 
+        // saves error logs for debugging
+        SharedPreferences debugPrefs = this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
+        debugPrefs.edit()
+                .putString(getString(R.string.tag_debug_onPlaybackError), s)
+                .apply();
     }
 }

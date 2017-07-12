@@ -88,31 +88,28 @@ public class MainActivity extends FragmentActivity
 
         }
 
+        printDebugLogs();
     }
 
     // authorizes user towards Spotify
     public void authSpotify() {
-
-        Log.d("MainActivity", "authing..");
 
         AuthenticationRequest.Builder builder = new AuthenticationRequest.Builder(
                 CLIENT_ID,
                 AuthenticationResponse.Type.TOKEN,
                 REDIRECT_URI);
 
-        builder.setScopes(new String[]{"user-read-private", "streaming"});
+        builder.setScopes(new String[]{"streaming"});
         AuthenticationRequest request = builder.build();
 
         AuthenticationClient.openLoginActivity(this, REQUEST_CODE, request);
     }
 
+    // response from openLoginActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
 
-        Log.d("MainActivity", "onActivityResult");
-        Log.d("MainActivity", "requestCode: " + requestCode);
-        Log.d("MainActivity", "resultCode: " + resultCode);
 
         // Check if result comes from the correct activity
         if (requestCode == REQUEST_CODE) {
@@ -122,12 +119,11 @@ public class MainActivity extends FragmentActivity
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
 
                 token = response.getAccessToken();
-                Log.d("MainActivity", "Got token!");
 
-                // saves auth token locally
-                SharedPreferences prefs = this.getSharedPreferences("com.musicalarm.mikael.musicalarm", Context.MODE_PRIVATE);
+                // saves auth token locally for use in AlarmActivity
+                SharedPreferences prefs = this.getSharedPreferences(getString(R.string.tag_sharedprefs), Context.MODE_PRIVATE);
                 prefs.edit()
-                        .putString("com.musicalarm.mikael.musicalarm.token", token)
+                        .putString(getString(R.string.tag_sharedpref_token), token)
                         .apply();
 
             }
@@ -431,5 +427,17 @@ public class MainActivity extends FragmentActivity
         animation1.setDuration(500);
         animation1.setFillAfter(true);
         homeFragment.getView().startAnimation(animation1);
+    }
+
+    // prints logs of errors for debugging
+    public void printDebugLogs() {
+        SharedPreferences debugPrefs =
+                this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
+
+        Log.e(getString(R.string.tag_log), "onPlaybackError: " + debugPrefs.getString(getString(R.string.tag_debug_onPlaybackError), ""));
+        Log.e(getString(R.string.tag_log), "onTemporaryError: " + debugPrefs.getString(getString(R.string.tag_debug_onTemporaryError), ""));
+        Log.e(getString(R.string.tag_log), "onError: " + debugPrefs.getString(getString(R.string.tag_debug_onError), ""));
+        Log.e(getString(R.string.tag_log), "onLoginFailed: " + debugPrefs.getString(getString(R.string.tag_debug_onLoginFailed), ""));
+
     }
 }

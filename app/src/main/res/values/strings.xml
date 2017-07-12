@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">MusicAlarm</string>
+    <string name="tag_debug">com.musicalarm.mikael.musicalarm.debug</string>
+    <string name="tag_debug_onPlaybackError">com.musicalarm.mikael.musicalarm.debug.onPlaybackError</string>
+    <string name="tag_debug_onTemporaryError">com.musicalarm.mikael.musicalarm.debug.onTemporaryError</string>
+    <string name="tag_debug_onError">com.musicalarm.mikael.musicalarm.debug.onError</string>
+    <string name="tag_debug_onLoginFailed">com.musicalarm.mikael.musicalarm.debug.onLoginFailed</string>
+    <string name="tag_sharedprefs">com.musicalarm.mikael.musicalarm</string>
+    <string name="tag_sharedpref_token">com.musicalarm.mikael.musicalarm.token</string>
+    <string name="tag_log">MainActivity</string>
 </resources>
