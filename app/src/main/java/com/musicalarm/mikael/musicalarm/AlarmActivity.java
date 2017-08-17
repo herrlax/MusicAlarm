@@ -34,7 +34,7 @@ import com.squareup.picasso.Picasso;
  */
 
 public class AlarmActivity extends Activity
-        implements ConnectionStateCallback, PlayerNotificationCallback, Player.InitializationObserver {
+        implements ConnectionStateCallback, PlayerNotificationCallback {
 
     private ImageView image;
     private LinearLayout background;
@@ -69,19 +69,12 @@ public class AlarmActivity extends Activity
 
         numOfAuthTries = 0;
 
-        SharedPreferences prefs = this.getSharedPreferences(getString(R.string.tag_sharedprefs), Context.MODE_PRIVATE);
-        Config config = new Config(this, prefs.getString(getString(R.string.tag_sharedpref_token), ""), CLIENT_ID);
-        config.useCache(false);
+        // SharedPreferences prefs = this.getSharedPreferences(getString(R.string.tag_sharedprefs), Context.MODE_PRIVATE);
+        // Config config = new Config(this, prefs.getString(getString(R.string.tag_sharedpref_token), ""), CLIENT_ID);
+        // config.useCache(true);
 
-        initPlayer(config);
-    }
-
-    // tries to get an instance of the Spotify player with the provided config
-    public void initPlayer(Config config) {
-
-        Log.d(getString(R.string.tag_log), "use token: " + config.oauthToken);
-
-        Spotify.getPlayer(config, this, AlarmActivity.this);
+        // initPlayer(config);
+        authSpotify();
     }
 
     public void initUI() {
@@ -195,15 +188,34 @@ public class AlarmActivity extends Activity
 
             if (response.getType() == AuthenticationResponse.Type.TOKEN) {
 
-                // updates auth token locally
-                SharedPreferences prefs = this.getSharedPreferences(getString(R.string.tag_sharedprefs), Context.MODE_PRIVATE);
-                prefs.edit()
-                        .putString(getString(R.string.tag_sharedpref_token), response.getAccessToken())
-                        .apply();
-
                 Config config = new Config(this, response.getAccessToken(), CLIENT_ID);
 
-                initPlayer(config);
+                Spotify.getPlayer(config, AlarmActivity.this, new Player.InitializationObserver() {
+                    @Override
+                    public void onInitialized(Player player) {
+                        Log.d(getString(R.string.tag_log), "onInitialized");
+
+                        mPlayer = player;
+                        mPlayer.addConnectionStateCallback(AlarmActivity.this);
+                        mPlayer.addPlayerNotificationCallback(AlarmActivity.this);
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        Log.e(getString(R.string.tag_log), "Could not initialize player: " + throwable.getMessage());
+
+                        // saves error logs for debugging
+                        SharedPreferences debugPrefs =
+                                AlarmActivity.this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
+                        debugPrefs.edit()
+                                .putString(getString(R.string.tag_debug_onError), throwable.getMessage())
+                                .apply();
+
+
+                        // Retries to auth Spotify
+                        authSpotify();
+                    }
+                });
 
             }
         }
@@ -213,8 +225,7 @@ public class AlarmActivity extends Activity
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
-                | WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON);
+                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
     }
 
     public void resetFlags() {
@@ -225,7 +236,8 @@ public class AlarmActivity extends Activity
 
     @Override
     public void onLoggedIn() {
-
+        // Plays song as soon as auth is done and user is logged in
+        mPlayer.play(alarmItem.getTrackUri());
     }
 
     @Override
@@ -236,6 +248,7 @@ public class AlarmActivity extends Activity
     @Override
     public void onLoginFailed(Throwable throwable) {
         Log.e(getString(R.string.tag_log), "onLoginFailed: " + throwable.getMessage());
+        authSpotify();
 
         // saves error logs for debugging
         SharedPreferences debugPrefs = this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
@@ -279,30 +292,10 @@ public class AlarmActivity extends Activity
                 .apply();
     }
 
-    @Override
-    public void onInitialized(Player player) {
-        Log.d(getString(R.string.tag_log), "onInitialized");
-
-        mPlayer = player;
-        mPlayer.addConnectionStateCallback(AlarmActivity.this);
-        mPlayer.addPlayerNotificationCallback(AlarmActivity.this);
-        mPlayer.play(alarmItem.getTrackUri());
-    }
 
     @Override
-    public void onError(Throwable throwable) {
-
-        Log.e(getString(R.string.tag_log), "Could not initialize player: " + throwable.getMessage());
-
-        // saves error logs for debugging
-        SharedPreferences debugPrefs =
-                AlarmActivity.this.getSharedPreferences(getString(R.string.tag_debug), Context.MODE_PRIVATE);
-        debugPrefs.edit()
-                .putString(getString(R.string.tag_debug_onError), throwable.getMessage())
-                .apply();
-
-
-        // retries to auth Spotify
-        authSpotify();
+    protected void onDestroy() {
+        Spotify.destroyPlayer(AlarmActivity.this); // destroy player to avoid resource leak
+        super.onDestroy();
     }
 }

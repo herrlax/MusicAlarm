@@ -64,6 +64,8 @@ public class MainActivity extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Log.d(getString(R.string.tag_log), "onCreate");
+
         initHomeFragment();
         loadAlarms();
 
