@@ -19,7 +19,6 @@ public class RecycleViewHolder extends RecyclerView.ViewHolder {
     private ImageView cardImage;
     private TextView cardName;
     private TextView cardArtist;
-    private TextView cardDelete;
 
     private int id = 0;
 
@@ -29,7 +28,6 @@ public class RecycleViewHolder extends RecyclerView.ViewHolder {
         cardImage = (ImageView) view.findViewById(R.id.card_image);
         cardName = (TextView) view.findViewById(R.id.card_name);
         cardArtist = (TextView) view.findViewById(R.id.card_artist);
-        cardDelete = (TextView) view.findViewById(R.id.card_delete);
 
         cardImage.setOnClickListener(view1 -> {
 
@@ -51,10 +49,6 @@ public class RecycleViewHolder extends RecyclerView.ViewHolder {
 
     public TextView getCardArtist() {
         return cardArtist;
-    }
-
-    public TextView getCardDelete () {
-        return cardDelete;
     }
 
     public int getId() {

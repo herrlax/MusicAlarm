@@ -61,11 +61,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder>
                 .centerCrop()
                 .into(holder.getCardImage());
 
-
-        holder.getCardDelete().setOnClickListener(view -> {
-            listener.onDeleteClick(alarmItem);
-        });
-
         holder.getCardImage().setOnClickListener(view1 -> {
             listener.onItemClicked(alarmItem);
         });
