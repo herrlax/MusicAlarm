@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:clickable="true"
     android:layout_width="match_parent"
     android:background="#0E0E0E"
     android:fitsSystemWindows="true"
@@ -54,9 +54,24 @@
                 android:id="@+id/cancel_button"
                 android:textStyle="bold"
                 android:textSize="20dp"
+                android:background="@drawable/ripple_back"
                 android:layout_marginRight="@dimen/card_margin"
                 android:textColor="@color/textPrimary"
                 android:text="Cancel"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/delete_button"
+                android:visibility="gone"
+                android:textStyle="bold"
+                android:textSize="20dp"
+                android:background="@drawable/ripple_back"
+                android:layout_marginRight="@dimen/card_margin"
+                android:textColor="@color/textPrimary"
+                android:text="Delete"
                 android:layout_centerVertical="true"
                 android:layout_alignParentEnd="true" />
 

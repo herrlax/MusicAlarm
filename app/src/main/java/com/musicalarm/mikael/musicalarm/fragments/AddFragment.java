@@ -110,7 +110,9 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
         albumImage = (ImageView) view.findViewById(R.id.album_image);
 
         TextView cancelButton = (TextView) view.findViewById(R.id.cancel_button);
-        //cancelButton.setOnClickListener(view16 -> cancelDeleteClicked());
+        TextView deleteButton = (TextView) view.findViewById(R.id.delete_button);
+        cancelButton.setOnClickListener(view16 -> cancelDeleteClicked());
+        deleteButton.setOnClickListener(view17 -> deleteButtonClicked());
 
         ImageView backButton = (ImageView) view.findViewById(R.id.back_button);
         backButton.setOnClickListener(view15 -> exitFragment());
@@ -161,7 +163,8 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
             timeText.setText(oldAlarmItem.getFormatedTime());
             titleText.setText("Edit alarm");
             saveButton.setText("Save alarm");
-            cancelButton.setText("Delete");
+            cancelButton.setVisibility(View.GONE);
+            deleteButton.setVisibility(View.VISIBLE);
         }
 
         // when users enters text, suggest new songs..
@@ -239,10 +242,11 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     }
 
     public void cancelDeleteClicked() {
+        exitFragment();
+    }
 
-        if(editing)
-            listener.deleteClicked(oldAlarmItem);
-
+    public void deleteButtonClicked() {
+        listener.deleteClicked(oldAlarmItem);
         exitFragment();
     }
 
