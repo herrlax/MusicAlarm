@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.icu.util.Calendar;
 import android.icu.util.GregorianCalendar;
+import android.icu.util.TimeZone;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -63,6 +64,9 @@ public class MainActivity extends FragmentActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Log.d("MainActivity", "timezone: " + TimeZone.getDefault().getDisplayName());
+        Log.d("MainActivity", "offset: " + TimeZone.getDefault().getOffset(System.currentTimeMillis()));
 
         Log.d(getString(R.string.tag_log), "onCreate");
 
@@ -239,6 +243,7 @@ public class MainActivity extends FragmentActivity
         if(alarmTime != null) {
             calendar.setTimeInMillis(alarmTime);
 
+            long localTime = alarmTime + TimeZone.getDefault().getOffset(System.currentTimeMillis());
             // notifies the user of the scheduled alarm
             notifyUserOfSchedule(alarmTime - System.currentTimeMillis()  + 1000, // adds a second of visual reasons
                     "snoozed",
@@ -246,8 +251,8 @@ public class MainActivity extends FragmentActivity
 
             // sets new time for snooze
             AlarmItem snoozeAlarm = alarmItem.clone();
-            snoozeAlarm.setMinute((int) ((alarmTime / (1000*60)) % 60));
-            snoozeAlarm.setHour((int) ((alarmTime / (1000*60*60)) % 24));
+            snoozeAlarm.setMinute((int) ((localTime / (1000*60)) % 60));
+            snoozeAlarm.setHour((int) ((localTime / (1000*60*60)) % 24));
 
             pi = alarmItemToPendingIntent(snoozeAlarm);
 
