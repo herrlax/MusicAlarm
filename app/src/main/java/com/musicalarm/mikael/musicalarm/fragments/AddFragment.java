@@ -80,6 +80,7 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
     public interface AddFragmentListener {
         void saveClicked(AlarmItem item);
         void deleteClicked(AlarmItem item);
+        void updateAlarm(AlarmItem oldAlarm, AlarmItem newAlarm);
     }
 
     private AddFragmentListener listener;
@@ -126,12 +127,12 @@ public class AddFragment extends Fragment implements Response.Listener<String>, 
                 return;
 
             // if editing, remove the old alarm
-            if(editing)
-                listener.deleteClicked(oldAlarmItem);
+            if(editing) {
+                listener.updateAlarm(oldAlarmItem, alarmItem);
+            } else {
+                listener.saveClicked(alarmItem);
+            }
 
-            Log.d("MainActivity", listener.toString());
-
-            listener.saveClicked(alarmItem);
             exitFragment();
         });
 

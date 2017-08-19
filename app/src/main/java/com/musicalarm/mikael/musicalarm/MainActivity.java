@@ -169,14 +169,28 @@ public class MainActivity extends FragmentActivity
         alarms.add(item);
         homeFragment.refreshList();
         saveAlarms();
-
         scheduleAlarm(item, null);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public void deleteClicked(AlarmItem item) {
-        onDeleteClick(item);
+        displayUndo(item, alarms.indexOf(item));
+        removeAlarm(item);
+
+        saveAlarms();
+        homeFragment.refreshList();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    public void updateAlarm(AlarmItem oldAlarm, AlarmItem newAlarm) {
+        removeAlarm(oldAlarm);
+        alarms.add(newAlarm);
+        scheduleAlarm(newAlarm, null);
+
+        saveAlarms();
+        homeFragment.refreshList();
     }
 
     // loading alarms from local memory
@@ -262,10 +276,6 @@ public class MainActivity extends FragmentActivity
         alarmManager.setAlarmClock(
                 new AlarmManager.AlarmClockInfo(calendar.getTimeInMillis(), pi),
                 pi);
-
-        /*alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                calendar.getTimeInMillis(),
-                pi);*/
     }
 
     /**
@@ -348,10 +358,8 @@ public class MainActivity extends FragmentActivity
      * Deletes and alarms and cancels it in the alarm manager
      */
     @RequiresApi(api = Build.VERSION_CODES.N)
-    @Override
-    public void onDeleteClick(AlarmItem item) {
+    public void removeAlarm(AlarmItem item) {
 
-        displayUndo(item, alarms.indexOf(item));
         alarms.remove(item);
 
         if(alarmManager == null)
@@ -359,9 +367,6 @@ public class MainActivity extends FragmentActivity
 
         alarmManager.cancel(
                 alarmItemToPendingIntent(item));
-
-        saveAlarms();
-        homeFragment.refreshList();
     }
 
     @Override
@@ -396,6 +401,7 @@ public class MainActivity extends FragmentActivity
             alarms.add(pos, removedItem);
             saveAlarms();
             homeFragment.refreshList();
+            scheduleAlarm(removedItem, null);
         });
 
         sn.show();

@@ -19,7 +19,6 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecycleViewHolder> {
 
     public interface AdapterListener {
-        void onDeleteClick(AlarmItem item);
         void onItemClicked(AlarmItem item);
     }
 
